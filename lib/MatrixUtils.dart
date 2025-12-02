@@ -1,5 +1,4 @@
 // lib/MatrixUtils.dart
-import 'dart:math';
 
 class MatrixOps {
   static const double eps = 1e-12;
