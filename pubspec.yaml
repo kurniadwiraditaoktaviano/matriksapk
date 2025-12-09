@@ -18,17 +18,19 @@ dev_dependencies:
   flutter_lints: ^5.0.0
   # Tambahkan ini untuk mengubah icon aplikasi
   flutter_launcher_icons: "^0.13.1"
+  change_app_package_name: "^1.1.0"
+
 
 # Konfigurasi Icon Aplikasi
 flutter_launcher_icons:
   android: "launcher_icon"
   ios: true
-  image_path: "assets/matriks.png"
+  image_path: "assets/matrix.png"  # <-- Ganti jadi matrix.png
   min_sdk_android: 21
 
 flutter:
   uses-material-design: true
 
-  # Konfigurasi agar gambar bisa dipakai di dalam UI aplikasi
+  # Konfigurasi assets
   assets:
-    - assets/matriks.png
+    - assets/matrix.png            # <-- Ganti jadi matrix.png
