@@ -72,7 +72,9 @@ class MatrixOps {
       }
 
       final diag = aug[i][i];
-      for (int j = 0; j < 2 * n; j++) aug[i][j] /= diag;
+      for (int j = 0; j < 2 * n; j++) {
+        aug[i][j] /= diag;
+      }
 
       for (int k = 0; k < n; k++) {
         if (k == i) continue;
@@ -106,7 +108,9 @@ class MatrixOps {
     for (int r = 0; r < rowCount; r++) {
       if (lead >= colCount) break;
       int i = r;
-      while (i < rowCount && m[i][lead].abs() < eps) i++;
+      while (i < rowCount && m[i][lead].abs() < eps) {
+        i++;
+      }
       if (i == rowCount) {
         lead++;
         r--;
@@ -119,7 +123,9 @@ class MatrixOps {
 
       final div = m[r][lead];
       if (div.abs() > eps) {
-        for (int j = 0; j < colCount; j++) m[r][j] /= div;
+        for (int j = 0; j < colCount; j++) {
+          m[r][j] /= div;
+        }
       }
 
       for (int k = 0; k < rowCount; k++) {
@@ -142,9 +148,7 @@ class MatrixOps {
     final steps = <String>[];
 
     void record(String title) {
-      steps.add(title +
-          ':\n' +
-          aug.map((r) => r.map((v) => v.toStringAsFixed(6)).join('\t')).join('\n'));
+      steps.add('$title:\n${aug.map((r) => r.map((v) => v.toStringAsFixed(6)).join('\t')).join('\n')}');
     }
 
     record('Awal');
@@ -164,13 +168,17 @@ class MatrixOps {
       }
 
       final diag = aug[i][i];
-      for (int j = 0; j <= n; j++) aug[i][j] /= diag;
+      for (int j = 0; j <= n; j++) {
+        aug[i][j] /= diag;
+      }
       record('Normalkan baris $i');
 
       for (int k = 0; k < n; k++) {
         if (k == i) continue;
         final factor = aug[k][i];
-        for (int j = 0; j <= n; j++) aug[k][j] -= factor * aug[i][j];
+        for (int j = 0; j <= n; j++) {
+          aug[k][j] -= factor * aug[i][j];
+        }
       }
       record('Eliminasi kolom $i');
     }
@@ -193,8 +201,7 @@ class MatrixOps {
     List<String> steps = [];
 
     void recordMatrix(String desc) {
-      steps.add('$desc:\n' +
-          mat.map((r) => r.map((v) => v.toStringAsFixed(6)).join('\t')).join('\n'));
+      steps.add('$desc:\n${mat.map((r) => r.map((v) => v.toStringAsFixed(6)).join('\t')).join('\n')}');
     }
 
     recordMatrix('Matriks awal');
@@ -245,8 +252,9 @@ class MatrixOps {
     List<List<double>> U = List.generate(n, (i) => List.filled(n, 0.0));
     for (int i = 0; i < n; i++) {
       for (int j = 0; j < n; j++) {
-        if (i > j) L[i][j] = mat[i][j];
-        else if (i == j) {
+        if (i > j) {
+          L[i][j] = mat[i][j];
+        } else if (i == j) {
           L[i][j] = 1.0;
           U[i][j] = mat[i][j];
         } else {
@@ -295,7 +303,9 @@ class MatrixOps {
     List<String> backwardSteps = [];
 
     List<double> pb = List.filled(n, 0.0);
-    for (int i = 0; i < n; i++) pb[i] = b[pivot[i]];
+    for (int i = 0; i < n; i++) {
+      pb[i] = b[pivot[i]];
+    }
     forwardSteps.add('Terapkan pivot ke b: ${pb.map((v) => v.toStringAsFixed(6)).toList()}');
 
     List<double> y = List.filled(n, 0.0);

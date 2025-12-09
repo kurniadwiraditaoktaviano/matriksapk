@@ -139,14 +139,18 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
 
       final pivot = mat[r][c];
       if (pivot.abs() < 1e-15) continue; // avoid dividing by (near) zero
-      for (int j = c; j < m; j++) mat[r][j] /= pivot;
+      for (int j = c; j < m; j++) {
+        mat[r][j] /= pivot;
+      }
       _recordOBE(mat, 'Normalisasi baris $r (pivot di kolom $c dibuat 1)');
 
       for (int i = 0; i < n; i++) {
         if (i == r) continue;
         final factor = mat[i][c];
         if (factor.abs() < 1e-12) continue;
-        for (int j = c; j < m; j++) mat[i][j] -= factor * mat[r][j];
+        for (int j = c; j < m; j++) {
+          mat[i][j] -= factor * mat[r][j];
+        }
         _recordOBE(mat, 'Eliminasi: gunakan baris $r untuk mengeliminasi entri pada baris $i');
       }
 
@@ -156,7 +160,9 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
     // Check inconsistent rows
     for (int i = 0; i < n; i++) {
       bool allZero = true;
-      for (int j = 0; j < cols; j++) if (mat[i][j].abs() > 1e-9) allZero = false;
+      for (int j = 0; j < cols; j++) {
+        if (mat[i][j].abs() > 1e-9) allZero = false;
+      }
       if (allZero && mat[i][cols].abs() > 1e-9) {
         setState(() {
           solution = [];
@@ -175,7 +181,9 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
       for (int i = 0; i < n; i++) {
         if ((mat[i][c] - 1.0).abs() < 1e-9) {
           bool onlyPivot = true;
-          for (int cc = 0; cc < cols; cc++) if (cc != c && mat[i][cc].abs() > 1e-9) onlyPivot = false;
+          for (int cc = 0; cc < cols; cc++) {
+            if (cc != c && mat[i][cc].abs() > 1e-9) onlyPivot = false;
+          }
           if (onlyPivot) {
             prow = i;
             break;
@@ -201,7 +209,9 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
   }
 
   void _clearAll() {
-    for (var row in controllers) for (var c in row) c.text = '0';
+    for (var row in controllers) for (var c in row) {
+      c.text = '0';
+    }
     setState(() {
       solution = [];
       lastOperationLabel = '';
@@ -422,16 +432,22 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
             child: _buildSolutionPreview(),
           ),
           const SizedBox(height: 12),
-          Row(mainAxisAlignment: MainAxisAlignment.spaceBetween, children: [
-            const Text('Detail Operasi Baris Elementer (OBE)', style: TextStyle(fontWeight: FontWeight.w600)),
-            Row(children: [
-              ElevatedButton.icon(onPressed: obeSnapshots.isNotEmpty ? () => _showOBEViewer(0) : null, icon: const Icon(Icons.playlist_play), label: const Text('Lihat Langkah')),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(onPressed: rows == cols ? _onShowLUSteps : null, icon: const Icon(Icons.account_tree_outlined), label: const Text('Tampilkan Langkah LU')),
-              const SizedBox(width: 8),
-              ElevatedButton.icon(onPressed: solution.isNotEmpty ? _copySolutionCSV : null, icon: const Icon(Icons.copy), label: const Text('Copy Hasil')),
-            ])
-          ]),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              const Text('Detail Operasi Baris Elementer (OBE)', style: TextStyle(fontWeight: FontWeight.w600)),
+              const SizedBox(height: 8),
+              Wrap(
+                spacing: 8.0,
+                runSpacing: 4.0,
+                children: <Widget>[
+                  ElevatedButton.icon(onPressed: obeSnapshots.isNotEmpty ? () => _showOBEViewer(0) : null, icon: const Icon(Icons.playlist_play), label: const Text('Lihat Langkah')),
+                  ElevatedButton.icon(onPressed: rows == cols ? _onShowLUSteps : null, icon: const Icon(Icons.account_tree_outlined), label: const Text('Tampilkan Langkah LU')),
+                  ElevatedButton.icon(onPressed: solution.isNotEmpty ? _copySolutionCSV : null, icon: const Icon(Icons.copy), label: const Text('Copy Hasil')),
+                ],
+              )
+            ]
+          ),
           const SizedBox(height: 8),
           _buildRREFPreview(),
           const SizedBox(height: 12),
