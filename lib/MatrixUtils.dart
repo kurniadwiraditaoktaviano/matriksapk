@@ -1,4 +1,6 @@
 // lib/MatrixUtils.dart
+import 'dart:math';
+
 class MatrixOps {
   static const double eps = 1e-12;
 
@@ -9,6 +11,39 @@ class MatrixOps {
   /// Membuat deep copy dari matriks
   static List<List<double>> cloneMatrix(List<List<double>> A) =>
       A.map((r) => List<double>.from(r)).toList();
+
+  // ==================== FITUR BARU ====================
+  
+  /// Transpose Matriks (Menukar Baris jadi Kolom)
+  static List<List<double>> transpose(List<List<double>> A) {
+    if (A.isEmpty) return [];
+    final int r = A.length;
+    final int c = A[0].length;
+    return List.generate(c, (j) => List.generate(r, (i) => A[i][j]));
+  }
+
+  /// Perkalian Dua Matriks (A x B)
+  /// Mengembalikan null jika ukuran tidak cocok (Kolom A != Baris B)
+  static List<List<double>>? multiply(List<List<double>> A, List<List<double>> B) {
+    if (A.isEmpty || B.isEmpty) return null;
+    if (A[0].length != B.length) return null; // Syarat perkalian matriks
+
+    final int r1 = A.length;
+    final int c1 = A[0].length; // sama dengan B.length
+    final int c2 = B[0].length;
+
+    return List.generate(r1, (i) {
+      return List.generate(c2, (j) {
+        double sum = 0.0;
+        for (int k = 0; k < c1; k++) {
+          sum += A[i][k] * B[k][j];
+        }
+        return sum;
+      });
+    });
+  }
+  
+  // ====================================================
 
   /// Mengembalikan determinan matriks persegi
   static double determinant(List<List<double>> A) {
@@ -23,6 +58,8 @@ class MatrixOps {
       for (int j = i + 1; j < n; j++) {
         if (m[j][i].abs() > m[pivot][i].abs()) pivot = j;
       }
+      
+      // Jika pivot 0, determinan pasti 0 (matriks singular)
       if (m[pivot][i].abs() < eps) return 0.0;
 
       if (pivot != i) {
@@ -55,6 +92,11 @@ class MatrixOps {
   static List<List<double>>? inverse(List<List<double>> A) {
     if (!isSquare(A)) return null;
     final n = A.length;
+    
+    // Cek determinan dulu, jika 0 langsung return null agar lebih cepat
+    // (Opsional, tapi praktik yang baik)
+    if (determinant(A).abs() < eps) return null;
+
     final aug = List.generate(
         n, (i) => [...A[i], ...List.generate(n, (j) => i == j ? 1.0 : 0.0)]);
 
@@ -100,6 +142,7 @@ class MatrixOps {
   /// Menghasilkan bentuk eselon baris tereduksi (RREF)
   static List<List<double>> rref(List<List<double>> A) {
     final m = cloneMatrix(A);
+    if (m.isEmpty) return m;
     final rowCount = m.length;
     final colCount = m[0].length;
     int lead = 0;
@@ -139,7 +182,10 @@ class MatrixOps {
     return m;
   }
 
-  /// Menyelesaikan Ax=b menggunakan OBE dengan langkah-langkah (untuk pembelajaran)
+  // --- LU & OBE Steps (Tidak berubah, biarkan kode lama Anda di sini) ---
+  // (Pastikan Anda menyalin sisa kode luWithSteps dan luSolveToStringSteps
+  // dari file MatrixUtils.dart yang lama agar fitur LU tetap jalan)
+  
   static Map<String, dynamic> obeSolveWithSteps(
       List<List<double>> A, List<double> b) {
     final n = A.length;
@@ -186,10 +232,6 @@ class MatrixOps {
     record('Hasil akhir');
     return {'steps': steps, 'solution': solution};
   }
-
-  // ==========================================================
-  //  =============== FUNGSI LU + LANGKAH-LANGKAH =============
-  // ==========================================================
 
   static Map<String, dynamic>? luWithSteps(List<List<double>> A) {
     if (!isSquare(A)) return null;
