@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 android {
     namespace = "com.fauzan.matriksapk"
     compileSdk = flutter.compileSdkVersion
-    
+
     // --- PENTING: KITA KUNCI KE VERSI NDK STABIL YANG SUDAH DIINSTALL ---
     ndkVersion = "26.1.10909125"
     // --------------------------------------------------------------------
@@ -54,7 +54,7 @@ android {
         getByName("release") {
             // Menggunakan konfigurasi signing di atas
             signingConfig = signingConfigs.getByName("release")
-            
+
             // Karena kita pakai NDK 26, biasanya tidak butuh kode 'debugSymbolLevel' lagi.
             // Kode ini sudah bersih dan standar.
         }
