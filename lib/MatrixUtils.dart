@@ -1,4 +1,3 @@
-// lib/MatrixUtils.dart
 // ignore: unused_import
 import 'dart:math';
 
