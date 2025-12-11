@@ -14,7 +14,7 @@ class MatrixApp extends StatelessWidget {
     return MaterialApp(
       title: 'Matrix Solver',
       debugShowCheckedModeBanner: false, // Menghilangkan banner DEBUG di pojok kanan atas
-      
+
       // Mengatur Tema Aplikasi secara Global
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(
@@ -22,7 +22,7 @@ class MatrixApp extends StatelessWidget {
           brightness: Brightness.light,
         ),
         useMaterial3: true,
-        
+
         // Mengatur gaya AppBar agar seragam
         appBarTheme: const AppBarTheme(
           centerTitle: true,

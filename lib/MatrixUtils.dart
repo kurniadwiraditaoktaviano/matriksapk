@@ -14,7 +14,7 @@ class MatrixOps {
       A.map((r) => List<double>.from(r)).toList();
 
   // ==================== FITUR BARU ====================
-  
+
   /// Transpose Matriks (Menukar Baris jadi Kolom)
   static List<List<double>> transpose(List<List<double>> A) {
     if (A.isEmpty) return [];
@@ -43,7 +43,7 @@ class MatrixOps {
       });
     });
   }
-  
+
   // ====================================================
 
   /// Mengembalikan determinan matriks persegi
@@ -59,7 +59,7 @@ class MatrixOps {
       for (int j = i + 1; j < n; j++) {
         if (m[j][i].abs() > m[pivot][i].abs()) pivot = j;
       }
-      
+
       // Jika pivot 0, determinan pasti 0 (matriks singular)
       if (m[pivot][i].abs() < eps) return 0.0;
 
@@ -93,7 +93,7 @@ class MatrixOps {
   static List<List<double>>? inverse(List<List<double>> A) {
     if (!isSquare(A)) return null;
     final n = A.length;
-    
+
     // Cek determinan dulu, jika 0 langsung return null agar lebih cepat
     // (Opsional, tapi praktik yang baik)
     if (determinant(A).abs() < eps) return null;
@@ -186,7 +186,7 @@ class MatrixOps {
   // --- LU & OBE Steps (Tidak berubah, biarkan kode lama Anda di sini) ---
   // (Pastikan Anda menyalin sisa kode luWithSteps dan luSolveToStringSteps
   // dari file MatrixUtils.dart yang lama agar fitur LU tetap jalan)
-  
+
   static Map<String, dynamic> obeSolveWithSteps(
       List<List<double>> A, List<double> b) {
     final n = A.length;
