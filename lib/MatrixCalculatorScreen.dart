@@ -150,7 +150,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             Text(
               'det(A) =',
               style: const TextStyle(
-                fontSize: 16,
+                fontSize: 14,
                 color: Color(0xFF9CA3AF),
               ),
             ),
@@ -158,7 +158,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             Text(
               det.toStringAsFixed(6),
               style: const TextStyle(
-                fontSize: 36,
+                fontSize: 28,
                 fontWeight: FontWeight.w800,
                 color: Color(0xFF1F2937),
               ),
@@ -175,7 +175,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 const SizedBox(width: 8),
                 _buildInfoChip(
                   icon: Icons.compare_arrows,
-                  // ignore: unnecessary_brace_in_string_interps
                   label: '${rows} × $rows',
                   color: Colors.blue,
                 ),
@@ -227,56 +226,59 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 'A⁻¹ =',
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  fontSize: 18,
+                  fontSize: 16,
                   color: Color(0xFF374151),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Container(
                 decoration: BoxDecoration(
                   border: Border.all(color: const Color(0xFFE5E7EB)),
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
-                padding: const EdgeInsets.all(16),
-                child: Column(
-                  children: inv.asMap().entries.map((entry) {
-                    final i = entry.key;
-                    final row = entry.value;
-                    return Padding(
-                      padding: EdgeInsets.only(bottom: i < inv.length - 1 ? 8 : 0),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: row.asMap().entries.map((cell) {
-                          return Container(
-                            width: 70,
-                            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                            margin: const EdgeInsets.symmetric(horizontal: 2),
-                            decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(8),
-                              boxShadow: [
-                                BoxShadow(
-                                  // ignore: deprecated_member_use
-                                  color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
-                                ),
-                              ],
-                            ),
-                            child: Text(
-                              cell.value.toStringAsFixed(precision),
-                              textAlign: TextAlign.center,
-                              style: const TextStyle(
-                                fontSize: 13,
-                                fontWeight: FontWeight.w500,
-                                fontFamily: 'Monospace',
+                padding: const EdgeInsets.all(12),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Column(
+                    children: inv.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final row = entry.value;
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: i < inv.length - 1 ? 8 : 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: row.asMap().entries.map((cell) {
+                            return Container(
+                              width: 60,
+                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    // ignore: deprecated_member_use
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 3,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
                               ),
-                            ),
-                          );
-                        }).toList(),
-                      ),
-                    );
-                  }).toList(),
+                              child: Text(
+                                cell.value.toStringAsFixed(precision),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Monospace',
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
                 ),
               ),
               const SizedBox(height: 16),
@@ -284,11 +286,12 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 width: double.infinity,
                 child: ElevatedButton.icon(
                   onPressed: () => _copyMatrixToClipboard(inv),
-                  icon: const Icon(Icons.copy, size: 18),
-                  label: const Text('Copy Matrix'),
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text('Copy Matrix', style: TextStyle(fontSize: 13)),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: const Color(0xFFF3F4F6),
                     foregroundColor: const Color(0xFF374151),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
                 ),
               ),
@@ -464,14 +467,16 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       centerTitle: true,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.grid_on, color: Theme.of(context).colorScheme.primary),
+          Icon(Icons.grid_on, color: Theme.of(context).colorScheme.primary, size: 20),
           const SizedBox(width: 8),
           const Text(
             'MATRIX SOLVER',
             style: TextStyle(
-              fontWeight: FontWeight.w800,
-              letterSpacing: 1.0,
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              letterSpacing: 0.5,
             ),
           ),
         ],
@@ -479,20 +484,22 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       actions: [
         IconButton(
           onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary),
+          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary, size: 22),
           tooltip: 'Settings',
+          padding: const EdgeInsets.all(8),
         ),
       ],
+      toolbarHeight: 56,
     );
   }
 
   Widget _buildSettingsDrawer() {
     return Drawer(
-      width: 300,
+      width: MediaQuery.of(context).size.width * 0.85,
       child: Column(
         children: [
           Container(
-            height: 200,
+            height: 160,
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -503,190 +510,190 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 end: Alignment.bottomRight,
               ),
             ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.end,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Padding(
-                  padding: const EdgeInsets.all(24),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Icon(Icons.settings, color: Colors.white, size: 40),
-                      const SizedBox(height: 16),
-                      const Text(
-                        'SETTINGS',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.5,
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Matrix Solver Pro',
-                        style: TextStyle(
-                          // ignore: deprecated_member_use
-                          color: Colors.white.withOpacity(0.9),
-                          fontSize: 14,
-                        ),
-                      ),
-                    ],
+            child: Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.end,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(Icons.settings, color: Colors.white, size: 32),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'SETTINGS',
+                    style: TextStyle(
+                      color: Colors.white,
+                      fontSize: 20,
+                      fontWeight: FontWeight.w700,
+                    ),
                   ),
-                ),
-              ],
+                  const SizedBox(height: 4),
+                  Text(
+                    'Matrix Solver Pro',
+                    style: TextStyle(
+                      // ignore: deprecated_member_use
+                      color: Colors.white.withOpacity(0.9),
+                      fontSize: 12,
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
           Expanded(
-            child: ListView(
-              padding: const EdgeInsets.all(24),
-              children: [
-                const Text(
-                  'DISPLAY SETTINGS',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  const Text(
+                    'DISPLAY SETTINGS',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Precision Slider
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Row(
-                          children: [
-                            Icon(Icons.precision_manufacturing, 
-                                color: Theme.of(context).colorScheme.primary),
-                            const SizedBox(width: 12),
-                            Text(
-                              'Decimal Precision',
-                              style: TextStyle(
-                                fontWeight: FontWeight.w600,
-                                color: Theme.of(context).colorScheme.onSurface,
+                  const SizedBox(height: 12),
+                  
+                  // Precision Slider
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.precision_manufacturing, 
+                                  color: Theme.of(context).colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Decimal Precision',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 14,
+                                ),
                               ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text('$precision decimal places',
+                              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
+                          Slider(
+                            value: precision.toDouble(),
+                            min: 0,
+                            max: 10,
+                            divisions: 10,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            inactiveColor: Colors.grey.shade300,
+                            onChanged: (value) {
+                              setState(() => precision = value.toInt());
+                            },
+                          ),
+                          const Text(
+                            'Controls number of decimal places shown in results',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF9CA3AF),
                             ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Text('$precision decimal places',
-                            style: const TextStyle(color: Color(0xFF6B7280))),
-                        Slider(
-                          value: precision.toDouble(),
-                          min: 0,
-                          max: 10,
-                          divisions: 10,
-                          activeColor: Theme.of(context).colorScheme.primary,
-                          inactiveColor: Colors.grey.shade300,
-                          onChanged: (value) {
-                            setState(() => precision = value.toInt());
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  const Text(
+                    'MATRIX TOOLS',
+                    style: TextStyle(
+                      color: Color(0xFF6B7280),
+                      fontSize: 11,
+                      fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Matrix Tools
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Column(
+                      children: [
+                        ListTile(
+                          leading: Icon(Icons.refresh,
+                              color: Theme.of(context).colorScheme.primary, size: 22),
+                          title: const Text('Reset Matrix', style: TextStyle(fontSize: 14)),
+                          trailing: const Icon(Icons.chevron_right, size: 20),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _clearAll();
                           },
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         ),
-                        const Text(
-                          'Controls number of decimal places shown in results',
+                        const Divider(height: 0),
+                        ListTile(
+                          leading: Icon(Icons.shuffle,
+                              color: Theme.of(context).colorScheme.primary, size: 22),
+                          title: const Text('Randomize Values', style: TextStyle(fontSize: 14)),
+                          trailing: const Icon(Icons.chevron_right, size: 20),
+                          onTap: () {
+                            Navigator.pop(context);
+                            _randomizeMatrix();
+                          },
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        const Divider(height: 0),
+                        ListTile(
+                          leading: Icon(Icons.help_outline,
+                              color: Theme.of(context).colorScheme.primary, size: 22),
+                          title: const Text('Help & Tutorial', style: TextStyle(fontSize: 14)),
+                          trailing: const Icon(Icons.chevron_right, size: 20),
+                          onTap: () => _showHelpDialog(),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
+                  const Divider(),
+                  const SizedBox(height: 12),
+
+                  // App Info
+                  Center(
+                    child: Column(
+                      children: [
+                        Text(
+                          'Matrix Solver Pro v1.0',
                           style: TextStyle(
+                            color: Theme.of(context).colorScheme.onSurface
+                                // ignore: deprecated_member_use
+                                .withOpacity(0.7),
                             fontSize: 12,
-                            color: Color(0xFF9CA3AF),
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Linear Algebra Toolkit',
+                          style: TextStyle(
+                            fontSize: 10,
+                            color: Theme.of(context).colorScheme.onSurface
+                                // ignore: deprecated_member_use
+                                .withOpacity(0.5),
                           ),
                         ),
                       ],
                     ),
                   ),
-                ),
-
-                const SizedBox(height: 24),
-                const Text(
-                  'MATRIX TOOLS',
-                  style: TextStyle(
-                    color: Color(0xFF6B7280),
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    letterSpacing: 1.0,
-                  ),
-                ),
-                const SizedBox(height: 16),
-
-                // Matrix Tools
-                Card(
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  child: Column(
-                    children: [
-                      ListTile(
-                        leading: Icon(Icons.refresh,
-                            color: Theme.of(context).colorScheme.primary),
-                        title: const Text('Reset Matrix'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _clearAll();
-                        },
-                      ),
-                      const Divider(height: 0),
-                      ListTile(
-                        leading: Icon(Icons.shuffle,
-                            color: Theme.of(context).colorScheme.primary),
-                        title: const Text('Randomize Values'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () {
-                          Navigator.pop(context);
-                          _randomizeMatrix();
-                        },
-                      ),
-                      const Divider(height: 0),
-                      ListTile(
-                        leading: Icon(Icons.help_outline,
-                            color: Theme.of(context).colorScheme.primary),
-                        title: const Text('Help & Tutorial'),
-                        trailing: const Icon(Icons.chevron_right),
-                        onTap: () => _showHelpDialog(),
-                      ),
-                    ],
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-                const Divider(),
-                const SizedBox(height: 16),
-
-                // App Info
-                Center(
-                  child: Column(
-                    children: [
-                      Text(
-                        'Matrix Solver Pro v1.0',
-                        style: TextStyle(
-                          color: Theme.of(context).colorScheme.onSurface
-                              // ignore: deprecated_member_use
-                              .withOpacity(0.7),
-                        ),
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        'Linear Algebra Toolkit',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: Theme.of(context).colorScheme.onSurface
-                              // ignore: deprecated_member_use
-                              .withOpacity(0.5),
-                        ),
-                      ),
-                    ],
-                  ),
-                ),
-              ],
+                  const SizedBox(height: 16),
+                ],
+              ),
             ),
           ),
         ],
@@ -698,17 +705,17 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Card(
-        elevation: 8,
-        margin: const EdgeInsets.all(20),
+        elevation: 4,
+        margin: const EdgeInsets.all(12),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
@@ -719,40 +726,39 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   end: Alignment.centerRight,
                 ),
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
+                  top: Radius.circular(16),
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       // ignore: deprecated_member_use
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.grid_on, color: Colors.white, size: 24),
+                    child: const Icon(Icons.grid_on, color: Colors.white, size: 20),
                   ),
-                  const SizedBox(width: 16),
+                  const SizedBox(width: 12),
                   const Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'LINEAR SYSTEM INPUT',
+                          'INPUT MATRIX',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        SizedBox(height: 2),
                         Text(
                           'Enter matrix A and vector b for Ax = b',
                           style: TextStyle(
                             color: Colors.white70,
-                            fontSize: 13,
+                            fontSize: 11,
                           ),
                         ),
                       ],
@@ -761,19 +767,19 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   if (solution.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 6,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         // ignore: deprecated_member_use
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         '${solution.length} variables',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -784,26 +790,29 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             
             // Body
             Padding(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               child: Column(
                 children: [
                   // Dimension Controls
                   _buildDimensionControls(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   
                   // Matrix Grid
-                  _buildMatrixGrid(),
-                  const SizedBox(height: 24),
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: _buildMatrixGrid(),
+                  ),
+                  const SizedBox(height: 16),
                   
                   // Status Bar
                   Container(
                     padding: const EdgeInsets.symmetric(
-                      vertical: 12,
-                      horizontal: 16,
+                      vertical: 10,
+                      horizontal: 12,
                     ),
                     decoration: BoxDecoration(
                       color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                       border: Border.all(color: const Color(0xFFE5E7EB)),
                     ),
                     child: Row(
@@ -811,22 +820,25 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         Icon(
                           _getStatusIcon(),
                           color: _getStatusColor(),
-                          size: 16,
+                          size: 14,
                         ),
-                        const SizedBox(width: 12),
+                        const SizedBox(width: 8),
                         Expanded(
                           child: Text(
                             operationStatus,
                             style: TextStyle(
                               color: _getStatusColor(),
                               fontWeight: FontWeight.w500,
+                              fontSize: 12,
                             ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
                           ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 16),
                   
                   // Action Buttons
                   _buildActionButtons(),
@@ -843,28 +855,27 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(16),
         child: Column(
           children: [
             const Row(
               children: [
-                Icon(Icons.aspect_ratio, size: 20, color: Color(0xFF6B7280)),
-                SizedBox(width: 8),
+                Icon(Icons.aspect_ratio, size: 18, color: Color(0xFF6B7280)),
+                SizedBox(width: 6),
                 Text(
                   'MATRIX DIMENSIONS',
                   style: TextStyle(
-                    fontSize: 13,
+                    fontSize: 12,
                     fontWeight: FontWeight.w600,
                     color: Color(0xFF6B7280),
-                    letterSpacing: 1.0,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 12),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
@@ -904,13 +915,12 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         Text(
           label,
           style: const TextStyle(
-            fontSize: 11,
+            fontSize: 10,
             fontWeight: FontWeight.w600,
             color: Color(0xFF6B7280),
-            letterSpacing: 1.0,
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: 6),
         Row(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -920,18 +930,18 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               isEnabled: onDecrease != null,
             ),
             Container(
-              width: 60,
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              margin: const EdgeInsets.symmetric(horizontal: 12),
+              width: 50,
+              padding: const EdgeInsets.symmetric(vertical: 6),
+              margin: const EdgeInsets.symmetric(horizontal: 10),
               decoration: BoxDecoration(
                 color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(10),
+                borderRadius: BorderRadius.circular(8),
               ),
               child: Text(
                 '$value',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF1F2937),
                 ),
@@ -954,22 +964,22 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     required bool isEnabled,
   }) {
     return Material(
-      borderRadius: BorderRadius.circular(10),
+      borderRadius: BorderRadius.circular(8),
       color: isEnabled
           ? Theme.of(context).colorScheme.primary
           : const Color(0xFFE5E7EB),
       child: InkWell(
-        borderRadius: BorderRadius.circular(10),
+        borderRadius: BorderRadius.circular(8),
         onTap: onPressed,
         child: Container(
-          width: 36,
-          height: 36,
+          width: 32,
+          height: 32,
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(10),
+            borderRadius: BorderRadius.circular(8),
           ),
           child: Icon(
             icon,
-            size: 18,
+            size: 16,
             color: isEnabled ? Colors.white : const Color(0xFF9CA3AF),
           ),
         ),
@@ -978,51 +988,51 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   }
 
   Widget _buildMatrixGrid() {
-    final bool isWide = MediaQuery.of(context).size.width > 800;
-    
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFFE5E7EB)),
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
       ),
       child: Column(
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
             ),
             child: Row(
               children: [
-                SizedBox(width: isWide ? 60 : 50),
-                ...List.generate(cols, (j) => Expanded(
+                SizedBox(width: 40),
+                ...List.generate(cols, (j) => Container(
+                  width: 50,
                   child: Center(
                     child: Text(
                       'x${j+1}',
                       style: const TextStyle(
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF374151),
+                        fontSize: 12,
                       ),
                     ),
                   ),
                 )),
-                // ignore: sized_box_for_whitespace
                 Container(
-                  width: isWide ? 100 : 80,
+                  width: 50,
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Icon(Icons.arrow_right_alt, 
-                            size: 16, color: Colors.red.shade600),
-                        const SizedBox(width: 4),
+                            size: 14, color: Colors.red.shade600),
+                        const SizedBox(width: 2),
                         Text(
                           'b',
                           style: TextStyle(
                             fontWeight: FontWeight.w800,
                             color: Colors.red.shade600,
+                            fontSize: 12,
                           ),
                         ),
                       ],
@@ -1035,7 +1045,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
           // Rows
           ...List.generate(rows, (i) => Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 6),
             decoration: BoxDecoration(
               color: i % 2 == 0 ? Colors.white : const Color(0xFFFCFCFC),
               border: i < rows - 1
@@ -1044,101 +1054,102 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             ),
             child: Row(
               children: [
-                // ignore: sized_box_for_whitespace
                 Container(
-                  width: isWide ? 60 : 50,
+                  width: 40,
                   child: Center(
                     child: Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 8,
-                        vertical: 4,
+                        horizontal: 6,
+                        vertical: 2,
                       ),
                       decoration: BoxDecoration(
                         color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(6),
+                        borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
                         'R${i+1}',
                         style: const TextStyle(
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF6B7280),
+                          fontSize: 10,
                         ),
                       ),
                     ),
                   ),
                 ),
-                ...List.generate(cols, (j) => Expanded(
-                  child: Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 4),
-                    child: TextField(
-                      controller: controllers[i][j],
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 14,
-                        fontWeight: FontWeight.w500,
-                      ),
-                      decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                        ),
-                        enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                        ),
-                        focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(10),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
-                            width: 2,
-                          ),
-                        ),
-                        filled: true,
-                        fillColor: Colors.white,
-                      ),
-                      keyboardType: const TextInputType.numberWithOptions(
-                        decimal: true,
-                        signed: true,
-                      ),
-                      inputFormatters: [
-                        FilteringTextInputFormatter.allow(
-                          RegExp(r'[-0-9.,/]+'),
-                        ),
-                      ],
+                ...List.generate(cols, (j) => Container(
+                  width: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
+                  child: TextField(
+                    controller: controllers[i][j],
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
                     ),
+                    decoration: InputDecoration(
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      enabledBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(6),
+                        borderSide: BorderSide(
+                          color: Theme.of(context).colorScheme.primary,
+                          width: 1.5,
+                        ),
+                      ),
+                      filled: true,
+                      fillColor: Colors.white,
+                      isDense: true,
+                    ),
+                    keyboardType: const TextInputType.numberWithOptions(
+                      decimal: true,
+                      signed: true,
+                    ),
+                    inputFormatters: [
+                      FilteringTextInputFormatter.allow(
+                        RegExp(r'[-0-9.,/]+'),
+                      ),
+                    ],
                   ),
                 )),
                 Container(
-                  width: isWide ? 100 : 80,
-                  padding: const EdgeInsets.symmetric(horizontal: 4),
+                  width: 50,
+                  padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: TextField(
                     controller: controllers[i][cols],
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      fontSize: 14,
+                      fontSize: 12,
                       fontWeight: FontWeight.w700,
                       color: Colors.red.shade600,
                     ),
                     decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
                       border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(6),
                         borderSide: BorderSide(color: Colors.red.shade300),
                       ),
                       enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(6),
                         borderSide: BorderSide(color: Colors.red.shade300),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(10),
+                        borderRadius: BorderRadius.circular(6),
                         borderSide: BorderSide(
                           color: Colors.red.shade600,
-                          width: 2,
+                          width: 1.5,
                         ),
                       ),
                       filled: true,
                       fillColor: Colors.red.shade50,
+                      isDense: true,
                     ),
                   ),
                 ),
@@ -1151,73 +1162,63 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   }
 
   Widget _buildActionButtons() {
-    final bool isWide = MediaQuery.of(context).size.width > 600;
-    
-    if (isWide) {
-      return Row(
-        children: [
-          Expanded(
-            child: _buildPrimaryButton(),
-          ),
-          const SizedBox(width: 16),
-          _buildSecondaryButton(),
-          const SizedBox(width: 16),
-          _buildRandomButton(),
-        ],
-      );
-    } else {
-      return Column(
-        children: [
-          _buildPrimaryButton(),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Expanded(child: _buildSecondaryButton()),
-              const SizedBox(width: 12),
-              _buildRandomButton(),
-            ],
-          ),
-        ],
-      );
-    }
+    return Column(
+      children: [
+        // Primary button full width
+        SizedBox(
+          width: double.infinity,
+          child: _buildPrimaryButton(),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSecondaryButton(),
+            ),
+            const SizedBox(width: 12),
+            _buildRandomButton(),
+          ],
+        ),
+      ],
+    );
   }
 
   Widget _buildPrimaryButton() {
     return ElevatedButton(
       onPressed: isCalculating ? null : _onCalculateSPL,
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 18),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(14),
+          borderRadius: BorderRadius.circular(12),
         ),
+        minimumSize: const Size(double.infinity, 52),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: isCalculating
             ? [
                 SizedBox(
-                  width: 20,
-                  height: 20,
+                  width: 18,
+                  height: 18,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation(Colors.white),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 const Text(
                   'SOLVING...',
-                  style: TextStyle(fontWeight: FontWeight.w700),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
                 ),
               ]
             : [
-                Icon(Icons.calculate, size: 22),
-                const SizedBox(width: 12),
+                Icon(Icons.calculate, size: 20),
+                const SizedBox(width: 10),
                 const Text(
                   'SOLVE SYSTEM',
                   style: TextStyle(
-                    fontWeight: FontWeight.w800,
-                    fontSize: 16,
-                    letterSpacing: 0.5,
+                    fontWeight: FontWeight.w700,
+                    fontSize: 14,
                   ),
                 ),
               ],
@@ -1229,17 +1230,18 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return OutlinedButton(
       onPressed: _clearAll,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 18),
+        padding: const EdgeInsets.symmetric(vertical: 16),
         side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        minimumSize: const Size(0, 52),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.clear, size: 20),
-          SizedBox(width: 8),
+          Icon(Icons.clear, size: 18),
+          SizedBox(width: 6),
           Text(
-            'CLEAR ALL',
-            style: TextStyle(fontWeight: FontWeight.w600),
+            'CLEAR',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
           ),
         ],
       ),
@@ -1250,72 +1252,76 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return OutlinedButton(
       onPressed: _randomizeMatrix,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 18, horizontal: 20),
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
         side: BorderSide(color: Colors.blue.shade300, width: 1.5),
+        minimumSize: const Size(0, 52),
       ),
-      child: const Icon(Icons.shuffle, size: 22),
+      child: const Icon(Icons.shuffle, size: 20),
     );
   }
 
   Widget _buildSolutionCard() {
+    if (solution.isEmpty && lastOperationLabel.isEmpty) return const SizedBox();
+
     return FadeTransition(
       opacity: _fadeAnimation,
       child: Card(
-        elevation: 8,
-        margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+        elevation: 4,
+        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(16),
         ),
         child: Column(
           children: [
             // Header
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   colors: [
                     const Color(0xFF11998e),
                     const Color(0xFF38ef7d),
-                  ],
+                ],
                   begin: Alignment.centerLeft,
                   end: Alignment.centerRight,
                 ),
                 borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(20),
+                  top: Radius.circular(16),
                 ),
               ),
               child: Row(
                 children: [
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
                       // ignore: deprecated_member_use
                       color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.analytics, color: Colors.white),
+                    child: const Icon(Icons.analytics, color: Colors.white, size: 20),
                   ),
-                  const SizedBox(width: 16),
-                  const Expanded(
+                  const SizedBox(width: 12),
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          'SOLUTIONS & ANALYSIS',
+                        const Text(
+                          'SOLUTIONS',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
-                          'Matrix operations and system solutions',
+                          lastOperationLabel,
                           style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 13,
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12,
                           ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
                         ),
                       ],
                     ),
@@ -1323,19 +1329,19 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   if (solution.isNotEmpty)
                     Container(
                       padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 8,
+                        horizontal: 10,
+                        vertical: 4,
                       ),
                       decoration: BoxDecoration(
                         // ignore: deprecated_member_use
                         color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(20),
+                        borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
                         lastOperationLabel,
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 12,
+                          fontSize: 10,
                           fontWeight: FontWeight.w600,
                         ),
                       ),
@@ -1349,28 +1355,31 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               length: 3,
               child: Column(
                 children: [
-                  TabBar(
-                    labelColor: const Color(0xFF11998e),
-                    unselectedLabelColor: const Color(0xFF6B7280),
-                    indicatorColor: const Color(0xFF11998e),
-                    indicatorSize: TabBarIndicatorSize.tab,
-                    indicatorWeight: 3,
-                    labelStyle: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      fontSize: 13,
-                      letterSpacing: 0.5,
+                  SizedBox(
+                    height: 40,
+                    child: TabBar(
+                      labelColor: const Color(0xFF11998e),
+                      unselectedLabelColor: const Color(0xFF6B7280),
+                      indicatorColor: const Color(0xFF11998e),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicatorWeight: 3,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                      ),
+                      tabs: const [
+                        Tab(text: 'SOLUTION'),
+                        Tab(text: 'OPERATIONS'),
+                        Tab(text: 'ADVANCED'),
+                      ],
                     ),
-                    unselectedLabelStyle: const TextStyle(
-                      fontWeight: FontWeight.w500,
-                    ),
-                    tabs: const [
-                      Tab(text: 'SOLUTION'),
-                      Tab(text: 'OPERATIONS'),
-                      Tab(text: 'ADVANCED'),
-                    ],
                   ),
                   SizedBox(
-                    height: 400,
+                    height: 300,
                     child: TabBarView(
                       children: [
                         // Tab 1: Solution
@@ -1395,51 +1404,51 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
   Widget _buildSolutionTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'SYSTEM SOLUTION',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: Color(0xFF6B7280),
-              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           if (solution.isEmpty)
             Container(
-              padding: const EdgeInsets.all(40),
+              padding: const EdgeInsets.all(24),
               decoration: BoxDecoration(
                 color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(12),
                 border: Border.all(color: const Color(0xFFE5E7EB)),
               ),
               child: Column(
                 children: [
                   Icon(
                     Icons.auto_awesome_mosaic,
-                    size: 60,
+                    size: 48,
                     color: Colors.grey.shade400,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   const Text(
                     'No Solution Calculated',
                     style: TextStyle(
-                      fontSize: 16,
+                      fontSize: 14,
                       fontWeight: FontWeight.w600,
                       color: Color(0xFF6B7280),
                     ),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: 6),
                   Text(
                     'Click "Solve System" to find solution for Ax = b',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       color: Colors.grey.shade500,
+                      fontSize: 11,
                     ),
                   ),
                 ],
@@ -1449,7 +1458,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(20),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -1459,35 +1468,35 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(16),
+                    borderRadius: BorderRadius.circular(12),
                   ),
                   child: Column(
                     children: [
                       const Text(
                         'Solution Vector x:',
                         style: TextStyle(
-                          fontSize: 15,
+                          fontSize: 13,
                           fontWeight: FontWeight.w700,
                           color: Color(0xFF374151),
                         ),
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
                       Wrap(
-                        spacing: 12,
-                        runSpacing: 12,
+                        spacing: 10,
+                        runSpacing: 10,
                         alignment: WrapAlignment.center,
                         children: List.generate(solution.length, (i) {
                           return Container(
-                            width: 100,
-                            padding: const EdgeInsets.all(16),
+                            width: 80,
+                            padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(
                               color: Colors.white,
-                              borderRadius: BorderRadius.circular(12),
+                              borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
                                   // ignore: deprecated_member_use
                                   color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 10,
+                                  blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
                               ],
@@ -1499,14 +1508,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     color: Theme.of(context).colorScheme.primary,
-                                    fontSize: 13,
+                                    fontSize: 12,
                                   ),
                                 ),
-                                const SizedBox(height: 8),
+                                const SizedBox(height: 6),
                                 Text(
                                   solution[i].toStringAsFixed(precision),
                                   style: const TextStyle(
-                                    fontSize: 18,
+                                    fontSize: 16,
                                     fontWeight: FontWeight.w800,
                                     color: Color(0xFF1F2937),
                                     fontFamily: 'Monospace',
@@ -1520,7 +1529,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                     ],
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 
                 // Action Buttons
                 Row(
@@ -1528,16 +1537,22 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: _copySolutionCSV,
-                        icon: const Icon(Icons.copy, size: 18),
-                        label: const Text('Copy Values'),
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text('Copy Values', style: TextStyle(fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: 10),
                     Expanded(
                       child: OutlinedButton.icon(
                         onPressed: () => _showOBEViewer(0),
-                        icon: const Icon(Icons.visibility, size: 18),
-                        label: const Text('View Steps'),
+                        icon: const Icon(Icons.visibility, size: 16),
+                        label: const Text('View Steps', style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
                       ),
                     ),
                   ],
@@ -1553,37 +1568,36 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     final bool isSquare = rows == cols;
     
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'MATRIX OPERATIONS',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: Color(0xFF6B7280),
-              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             isSquare ? 'Square Matrix ($rows × $rows)' : 'Non-square Matrix',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: Colors.grey.shade600,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           
           // Matrix Operations Grid
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            mainAxisSpacing: 16,
-            crossAxisSpacing: 16,
-            childAspectRatio: 1.5,
+            mainAxisSpacing: 12,
+            crossAxisSpacing: 12,
+            childAspectRatio: 1.2,
             children: [
               _buildOperationCard(
                 title: 'Determinant',
@@ -1620,27 +1634,26 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             ],
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: 20),
           const Divider(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           // RREF Preview
           const Text(
             'RREF PREVIEW',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Color(0xFF6B7280),
-              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Container(
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFFE5E7EB)),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(10),
             child: _buildRREFPreview(),
           ),
         ],
@@ -1652,28 +1665,27 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     final bool isSquare = rows == cols;
     
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'ADVANCED METHODS',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
               color: Color(0xFF6B7280),
-              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 2),
           Text(
             'Numerical methods for system solving',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               color: Colors.grey.shade600,
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: 16),
           
           // Method Cards
           Column(
@@ -1686,7 +1698,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 onTap: _onShowLUSteps,
                 description: 'A = LU decomposition with pivot steps',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildMethodCard(
                 title: 'Gaussian Elimination',
                 icon: Icons.linear_scale,
@@ -1695,7 +1707,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 onTap: () => _showOBEViewer(0),
                 description: 'Step-by-step elimination process',
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               _buildMethodCard(
                 title: 'Matrix Multiplication',
                 icon: Icons.close,
@@ -1707,28 +1719,27 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             ],
           ),
           
-          const SizedBox(height: 32),
+          const SizedBox(height: 20),
           const Divider(),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           
           // Matrix Properties
           const Text(
             'MATRIX PROPERTIES',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 11,
               fontWeight: FontWeight.w700,
               color: Color(0xFF6B7280),
-              letterSpacing: 1.0,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 8),
           Card(
             elevation: 2,
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             child: Padding(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(12),
               child: Column(
                 children: [
                   _buildPropertyRow('Dimensions', '$rows × $cols'),
@@ -1756,26 +1767,26 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     required String description,
   }) {
     return Material(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       color: Colors.white,
-      elevation: 2,
+      elevation: 1,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: enabled ? onTap : null,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
               // ignore: deprecated_member_use
               color: enabled ? color.withOpacity(0.3) : Colors.grey.shade200,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(12),
+                padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
                   // ignore: deprecated_member_use
                   color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
@@ -1784,24 +1795,25 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 child: Icon(
                   icon,
                   color: enabled ? color : Colors.grey.shade400,
-                  size: 28,
+                  size: 20,
                 ),
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 8),
               Text(
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
                   color: enabled ? color : Colors.grey.shade400,
-                  fontSize: 15,
+                  fontSize: 12,
                 ),
+                textAlign: TextAlign.center,
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 description,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 11,
+                  fontSize: 10,
                   color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
                 ),
               ),
@@ -1821,37 +1833,37 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     required String description,
   }) {
     return Material(
-      borderRadius: BorderRadius.circular(16),
+      borderRadius: BorderRadius.circular(12),
       color: Colors.white,
-      elevation: 2,
+      elevation: 1,
       child: InkWell(
-        borderRadius: BorderRadius.circular(16),
+        borderRadius: BorderRadius.circular(12),
         onTap: enabled ? onTap : null,
         child: Container(
-          padding: const EdgeInsets.all(20),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
               // ignore: deprecated_member_use
               color: enabled ? color.withOpacity(0.2) : Colors.grey.shade200,
             ),
-            borderRadius: BorderRadius.circular(16),
+            borderRadius: BorderRadius.circular(12),
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(14),
+                padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
                   // ignore: deprecated_member_use
                   color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(12),
+                  borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
                   icon,
                   color: enabled ? color : Colors.grey.shade400,
-                  size: 24,
+                  size: 20,
                 ),
               ),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1861,14 +1873,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
                         color: enabled ? color : Colors.grey.shade400,
-                        fontSize: 16,
+                        fontSize: 14,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 2),
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 11,
                         color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
                       ),
                     ),
@@ -1878,6 +1890,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Icon(
                 Icons.chevron_right,
                 color: enabled ? color : Colors.grey.shade400,
+                size: 20,
               ),
             ],
           ),
@@ -1895,6 +1908,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           style: const TextStyle(
             color: Color(0xFF6B7280),
             fontWeight: FontWeight.w500,
+            fontSize: 12,
           ),
         ),
         Text(
@@ -1902,6 +1916,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           style: const TextStyle(
             color: Color(0xFF111827),
             fontWeight: FontWeight.w700,
+            fontSize: 12,
           ),
         ),
       ],
@@ -1912,8 +1927,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     final aug = _readAugmentedMatrix();
     if (aug.isEmpty) return const SizedBox();
     
-    final bool isWide = MediaQuery.of(context).size.width > 600;
-    final cellWidth = isWide ? 70.0 : 60.0;
+    final cellWidth = 55.0;
     
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -1923,14 +1937,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             Row(
               children: [
                 Container(
-                  width: 40,
-                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  width: 35,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
                   child: Text(
                     'R${i+1}',
                     style: const TextStyle(
                       fontWeight: FontWeight.w700,
                       color: Color(0xFF6B7280),
-                      fontSize: 11,
+                      fontSize: 10,
                     ),
                   ),
                 ),
@@ -1938,7 +1952,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   final isLast = j == aug[i].length - 1;
                   return Container(
                     width: cellWidth,
-                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
                     decoration: BoxDecoration(
                       color: isLast ? Colors.red.shade50 : Colors.white,
                       border: Border.all(
@@ -1949,7 +1963,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       aug[i][j].toStringAsFixed(precision),
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w500,
                         color: isLast ? Colors.red.shade700 : const Color(0xFF374151),
                         fontFamily: 'Monospace',
@@ -1970,23 +1984,23 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
         // ignore: deprecated_member_use
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(12),
         // ignore: deprecated_member_use
         border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 12, color: color),
-          const SizedBox(width: 4),
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 3),
           Text(
             label,
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -2008,47 +2022,47 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(24),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
                   // ignore: deprecated_member_use
                   color: iconColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
-                child: Icon(icon, size: 36, color: iconColor),
+                child: Icon(icon, size: 30, color: iconColor),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               Text(
                 title,
                 style: const TextStyle(
-                  fontSize: 20,
+                  fontSize: 18,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               content,
-              const SizedBox(height: 24),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
                   style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(10),
                     ),
                   ),
                   child: const Text(
                     'CLOSE',
-                    style: TextStyle(fontWeight: FontWeight.w700),
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                   ),
                 ),
               ),
@@ -2095,16 +2109,17 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
           ],
         ),
         backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
+        duration: const Duration(seconds: 3),
       ),
     );
   }
@@ -2114,16 +2129,17 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white),
-            const SizedBox(width: 12),
-            Expanded(child: Text(message)),
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
           ],
         ),
         backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(10),
         ),
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -2159,53 +2175,56 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             'Aᵀ =',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 18,
+              fontSize: 16,
               color: Color(0xFF374151),
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               border: Border.all(color: const Color(0xFFE5E7EB)),
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
-            child: Column(
-              children: transposed.map((row) {
-                return Padding(
-                  padding: const EdgeInsets.only(bottom: 8),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: row.map((val) {
-                      return Container(
-                        width: 70,
-                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
-                        margin: const EdgeInsets.symmetric(horizontal: 2),
-                        decoration: BoxDecoration(
-                          color: Colors.white,
-                          borderRadius: BorderRadius.circular(8),
-                          boxShadow: [
-                            BoxShadow(
-                              // ignore: deprecated_member_use
-                              color: Colors.black.withOpacity(0.05),
-                              blurRadius: 4,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
-                        ),
-                        child: Text(
-                          val.toStringAsFixed(precision),
-                          textAlign: TextAlign.center,
-                          style: const TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w500,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                children: transposed.map((row) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: row.map((val) {
+                        return Container(
+                          width: 60,
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                // ignore: deprecated_member_use
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 3,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
                           ),
-                        ),
-                      );
-                    }).toList(),
-                  ),
-                );
-              }).toList(),
+                          child: Text(
+                            val.toStringAsFixed(precision),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }).toList(),
+              ),
             ),
           ),
         ],
@@ -2227,7 +2246,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           const Text(
             'rank(A) =',
             style: TextStyle(
-              fontSize: 16,
+              fontSize: 14,
               color: Colors.grey,
             ),
           ),
@@ -2235,7 +2254,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           Text(
             '$rank',
             style: const TextStyle(
-              fontSize: 36,
+              fontSize: 28,
               fontWeight: FontWeight.w800,
               color: Color(0xFF1F2937),
             ),
@@ -2250,6 +2269,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   ? const Color(0xFF10B981)
                   : const Color(0xFFF59E0B),
               fontWeight: FontWeight.w600,
+              fontSize: 13,
             ),
           ),
         ],
@@ -2293,15 +2313,15 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         context: context,
         builder: (ctx) => Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(20),
           ),
           child: SizedBox(
-            width: 600,
+            width: MediaQuery.of(context).size.width * 0.9,
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(24),
+                  padding: const EdgeInsets.all(16),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -2312,41 +2332,49 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       end: Alignment.centerRight,
                     ),
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(24),
+                      top: Radius.circular(20),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_tree, color: Colors.white, size: 32),
-                      const SizedBox(width: 16),
+                      const Icon(Icons.account_tree, color: Colors.white, size: 24),
+                      const SizedBox(width: 12),
                       const Expanded(
                         child: Text(
                           'LU DECOMPOSITION',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 20,
-                            fontWeight: FontWeight.w800,
-                            letterSpacing: 1.0,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
                           ),
                         ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close, color: Colors.white),
+                        icon: const Icon(Icons.close, color: Colors.white, size: 20),
                       ),
                     ],
                   ),
                 ),
                 DefaultTabController(
                   length: 4,
-                  child: Expanded(
-                    child: Column(
-                      children: [
-                        TabBar(
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 40,
+                        child: TabBar(
                           labelColor: const Color(0xFFEC4899),
                           unselectedLabelColor: const Color(0xFF6B7280),
                           indicatorColor: const Color(0xFFEC4899),
                           indicatorWeight: 3,
+                          labelStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
                           tabs: const [
                             Tab(text: 'Decomposition'),
                             Tab(text: 'Forward Sub'),
@@ -2354,19 +2382,19 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                             Tab(text: 'Solution'),
                           ],
                         ),
-                        SizedBox(
-                          height: 400,
-                          child: TabBarView(
-                            children: [
-                              _buildStepsListView(decompSteps),
-                              _buildStepsListView(forwardSteps),
-                              _buildStepsListView(backwardSteps),
-                              _buildSolutionView(sol),
-                            ],
-                          ),
+                      ),
+                      SizedBox(
+                        height: 300,
+                        child: TabBarView(
+                          children: [
+                            _buildStepsListView(decompSteps),
+                            _buildStepsListView(forwardSteps),
+                            _buildStepsListView(backwardSteps),
+                            _buildSolutionView(sol),
+                          ],
                         ),
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
                 ),
               ],
@@ -2381,44 +2409,44 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
   Widget _buildStepsListView(List<String> steps) {
     return ListView.builder(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(12),
       itemCount: steps.length,
       itemBuilder: (context, index) {
         return Card(
           elevation: 1,
-          margin: const EdgeInsets.only(bottom: 12),
+          margin: const EdgeInsets.only(bottom: 8),
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Padding(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(12),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 24,
-                  height: 24,
+                  width: 22,
+                  height: 22,
                   decoration: BoxDecoration(
                     color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(11),
                   ),
                   child: Center(
                     child: Text(
                       '${index + 1}',
                       style: const TextStyle(
-                        fontSize: 12,
+                        fontSize: 10,
                         fontWeight: FontWeight.w700,
                         color: Color(0xFF6B7280),
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: 12),
                 Expanded(
                   child: SelectableText(
                     steps[index],
                     style: const TextStyle(
-                      fontSize: 13,
+                      fontSize: 11,
                       color: Color(0xFF374151),
                     ),
                   ),
@@ -2433,7 +2461,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
   Widget _buildSolutionView(List<double>? sol) {
     return Padding(
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(16),
       child: sol == null
           ? const Center(
               child: Column(
@@ -2441,15 +2469,15 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 children: [
                   Icon(
                     Icons.error_outline,
-                    size: 48,
+                    size: 40,
                     color: Colors.grey,
                   ),
-                  SizedBox(height: 16),
+                  SizedBox(height: 12),
                   Text(
                     'No solution found',
                     style: TextStyle(
                       color: Colors.grey,
-                      fontSize: 16,
+                      fontSize: 14,
                     ),
                   ),
                 ],
@@ -2461,19 +2489,19 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 const Text(
                   'Solution:',
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 16,
                     fontWeight: FontWeight.w700,
                     color: Color(0xFF1F2937),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 Wrap(
-                  spacing: 16,
-                  runSpacing: 16,
+                  spacing: 12,
+                  runSpacing: 12,
                   children: List.generate(sol.length, (i) {
                     return Container(
-                      width: 120,
-                      padding: const EdgeInsets.all(16),
+                      width: 100,
+                      padding: const EdgeInsets.all(12),
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
@@ -2483,7 +2511,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                             const Color(0xFF8B5CF6).withOpacity(0.1),
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(10),
                       ),
                       child: Column(
                         children: [
@@ -2492,14 +2520,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                             style: TextStyle(
                               fontWeight: FontWeight.w700,
                               color: const Color(0xFFEC4899),
-                              fontSize: 14,
+                              fontSize: 12,
                             ),
                           ),
-                          const SizedBox(height: 8),
+                          const SizedBox(height: 6),
                           Text(
                             sol[i].toStringAsFixed(precision),
                             style: const TextStyle(
-                              fontSize: 20,
+                              fontSize: 16,
                               fontWeight: FontWeight.w800,
                               color: Color(0xFF1F2937),
                             ),
@@ -2515,17 +2543,16 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   }
 
   void _onMatrixMultiply() {
-    // Implementation for matrix multiplication
-    // This is a placeholder - you would need to implement the UI for this
     _showInfo('Matrix multiplication feature coming soon!');
   }
 
   void _showInfo(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message),
+        content: Text(message, style: const TextStyle(fontSize: 13)),
         backgroundColor: const Color(0xFF3B82F6),
         behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
       ),
     );
   }
@@ -2535,28 +2562,28 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(24),
+          borderRadius: BorderRadius.circular(20),
         ),
         child: Padding(
-          padding: const EdgeInsets.all(32),
+          padding: const EdgeInsets.all(20),
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Icon(
                 Icons.help_outline,
-                size: 60,
+                size: 50,
                 color: Color(0xFF6A11CB),
               ),
-              const SizedBox(height: 24),
+              const SizedBox(height: 16),
               const Text(
                 'Matrix Solver Help',
                 style: TextStyle(
-                  fontSize: 24,
+                  fontSize: 20,
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF1F2937),
                 ),
               ),
-              const SizedBox(height: 16),
+              const SizedBox(height: 12),
               const Text(
                 '1. Enter your matrix A and vector b\n'
                 '2. Adjust dimensions as needed\n'
@@ -2564,17 +2591,17 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 '4. Use operations tab for matrix analysis\n'
                 '5. View step-by-step solutions',
                 style: TextStyle(
-                  fontSize: 14,
+                  fontSize: 12,
                   color: Color(0xFF6B7280),
                   height: 1.6,
                 ),
               ),
-              const SizedBox(height: 32),
+              const SizedBox(height: 20),
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () => Navigator.pop(ctx),
-                  child: const Text('GOT IT'),
+                  child: const Text('GOT IT', style: TextStyle(fontSize: 13)),
                 ),
               ),
             ],
@@ -2597,24 +2624,24 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             children: [
               _buildMatrixInputCard(),
               _buildSolutionCard(),
-              const SizedBox(height: 32),
+              const SizedBox(height: 12),
               Container(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(12),
                 color: const Color(0xFFF3F4F6),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
                       Icons.code,
-                      size: 14,
+                      size: 12,
                       color: const Color(0xFF757575),
                     ),
-                    const SizedBox(width: 8),
+                    const SizedBox(width: 6),
                     Text(
-                      'Matrix Solver Pro • v1.0 • Precision: $precision decimals',
+                      'Matrix Solver Pro • v1.0 • Precision: $precision',
                       style: TextStyle(
                         color: Colors.grey.shade600,
-                        fontSize: 12,
+                        fontSize: 10,
                       ),
                     ),
                   ],
@@ -2663,14 +2690,14 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
 
     return Dialog(
       shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(24),
+        borderRadius: BorderRadius.circular(20),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             decoration: BoxDecoration(
               gradient: LinearGradient(
                 colors: [
@@ -2679,32 +2706,31 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
                 ],
               ),
               borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(24),
+                top: Radius.circular(20),
               ),
             ),
             child: Row(
               children: [
-                const Icon(Icons.format_list_numbered, color: Colors.white, size: 28),
-                const SizedBox(width: 16),
+                const Icon(Icons.format_list_numbered, color: Colors.white, size: 22),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'STEP-BY-STEP SOLUTION',
+                        'STEP-BY-STEP',
                         style: TextStyle(
                           color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.w800,
-                          letterSpacing: 1.0,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: 2),
                       Text(
                         'Step ${currentIndex + 1} of $totalSteps',
                         style: const TextStyle(
                           color: Colors.white70,
-                          fontSize: 13,
+                          fontSize: 11,
                         ),
                       ),
                     ],
@@ -2712,7 +2738,7 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
                 ),
               ],
             ),
@@ -2720,16 +2746,16 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
           
           // Content
           Padding(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(16),
             child: Column(
               children: [
                 // Description
                 Container(
                   width: double.infinity,
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(12),
                   decoration: BoxDecoration(
                     color: const Color(0xFFF0F9FF),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                     border: Border.all(color: const Color(0xFFBAE6FD)),
                   ),
                   child: Text(
@@ -2737,57 +2763,61 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
                     style: const TextStyle(
                       color: Color(0xFF0369A1),
                       fontWeight: FontWeight.w600,
+                      fontSize: 12,
                     ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 
                 // Matrix Display
                 Container(
                   decoration: BoxDecoration(
                     border: Border.all(color: const Color(0xFFE5E7EB)),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(10),
                   ),
-                  padding: const EdgeInsets.all(16),
-                  child: Column(
-                    children: snapshot.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final row = entry.value;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: i < snapshot.length - 1 ? 12 : 0),
-                        child: Row(
-                          children: row.asMap().entries.map((cell) {
-                            final isLast = cell.key == row.length - 1;
-                            return Container(
-                              width: 70,
-                              padding: const EdgeInsets.symmetric(vertical: 10),
-                              decoration: BoxDecoration(
-                                color: isLast ? Colors.red.shade50 : Colors.white,
-                                border: Border.all(
-                                  color: isLast 
-                                      ? Colors.red.shade200 
-                                      : const Color(0xFFE5E7EB),
+                  padding: const EdgeInsets.all(12),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Column(
+                      children: snapshot.asMap().entries.map((entry) {
+                        final i = entry.key;
+                        final row = entry.value;
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: i < snapshot.length - 1 ? 8 : 0),
+                          child: Row(
+                            children: row.asMap().entries.map((cell) {
+                              final isLast = cell.key == row.length - 1;
+                              return Container(
+                                width: 55,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isLast ? Colors.red.shade50 : Colors.white,
+                                  border: Border.all(
+                                    color: isLast 
+                                        ? Colors.red.shade200 
+                                        : const Color(0xFFE5E7EB),
+                                  ),
                                 ),
-                              ),
-                              child: Text(
-                                cell.value.toStringAsFixed(widget.precision),
-                                textAlign: TextAlign.center,
-                                style: TextStyle(
-                                  fontSize: 13,
-                                  fontWeight: FontWeight.w600,
-                                  color: isLast 
-                                      ? Colors.red.shade700 
-                                      : const Color(0xFF1F2937),
+                                child: Text(
+                                  cell.value.toStringAsFixed(widget.precision),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isLast 
+                                        ? Colors.red.shade700 
+                                        : const Color(0xFF1F2937),
+                                  ),
                                 ),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      );
-                    }).toList(),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      }).toList(),
+                    ),
                   ),
                 ),
-                const SizedBox(height: 24),
+                const SizedBox(height: 16),
                 
                 // Navigation
                 Row(
@@ -2797,23 +2827,23 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
                         onPressed: currentIndex > 0
                             ? () => setState(() => currentIndex--)
                             : null,
-                        icon: const Icon(Icons.navigate_before, size: 20),
-                        label: const Text('Previous'),
+                        icon: const Icon(Icons.navigate_before, size: 18),
+                        label: const Text('Previous', style: TextStyle(fontSize: 13)),
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: 12),
                     Expanded(
                       child: ElevatedButton.icon(
                         onPressed: currentIndex < totalSteps - 1
                             ? () => setState(() => currentIndex++)
                             : null,
-                        icon: const Icon(Icons.navigate_next, size: 20),
-                        label: const Text('Next'),
+                        icon: const Icon(Icons.navigate_next, size: 18),
+                        label: const Text('Next', style: TextStyle(fontSize: 13)),
                         style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          padding: const EdgeInsets.symmetric(vertical: 12),
                           backgroundColor: const Color(0xFF10B981),
                         ),
                       ),

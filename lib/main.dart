@@ -33,42 +33,37 @@ class MatrixApp extends StatelessWidget {
           centerTitle: true,
           backgroundColor: Colors.white,
           foregroundColor: Color(0xFF1A1A1A),
-          elevation: 0,
+          elevation: 1,
           surfaceTintColor: Colors.transparent,
           shadowColor: Colors.black12,
           titleTextStyle: TextStyle(
-            fontSize: 20,
+            fontSize: 18,
             fontWeight: FontWeight.w700,
             color: Color(0xFF1A1A1A),
           ),
+          toolbarHeight: 56,
         ),
 
-        cardTheme: CardThemeData(
-          elevation: 8,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
-          ),
-          color: Colors.white,
-          shadowColor: Colors.black.withValues(alpha: 0.1),
-        ),
+        cardTheme: const CardThemeData(),
 
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: Colors.white,
           border: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           enabledBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(10),
             borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
           ),
           focusedBorder: OutlineInputBorder(
-            borderRadius: BorderRadius.circular(12),
-            borderSide: const BorderSide(color: Color(0xFF6A11CB), width: 2),
+            borderRadius: BorderRadius.circular(10),
+            borderSide: const BorderSide(color: Color(0xFF6A11CB), width: 1.5),
           ),
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
           hintStyle: const TextStyle(color: Color(0xFF9CA3AF)),
+          isDense: true,
         ),
 
         elevatedButtonTheme: ElevatedButtonThemeData(
@@ -76,29 +71,31 @@ class MatrixApp extends StatelessWidget {
             backgroundColor: const Color(0xFF6A11CB),
             foregroundColor: Colors.white,
             elevation: 0,
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             textStyle: const TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: 14,
             ),
+            minimumSize: const Size(0, 48),
           ),
         ),
 
         outlinedButtonTheme: OutlinedButtonThemeData(
           style: OutlinedButton.styleFrom(
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 24),
+            padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 20),
             side: const BorderSide(color: Color(0xFF6A11CB), width: 1.5),
             shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(10),
             ),
             textStyle: const TextStyle(
               fontWeight: FontWeight.w600,
-              fontSize: 16,
+              fontSize: 14,
               color: Color(0xFF6A11CB),
             ),
+            minimumSize: const Size(0, 48),
           ),
         ),
       ),
