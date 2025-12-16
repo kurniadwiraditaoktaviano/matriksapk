@@ -22,9 +22,8 @@ class MatrixApp extends StatelessWidget {
           primary: const Color(0xFF6A11CB),
           secondary: const Color(0xFF2575FC),
           surface: Colors.white,
-          // ignore: deprecated_member_use
-          background: const Color(0xFFF8F9FA),
         ),
+        scaffoldBackgroundColor: const Color(0xFFF8F9FA),
         useMaterial3: true,
 
         fontFamily: 'Inter',

@@ -259,8 +259,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
                                   BoxShadow(
-                                    // ignore: deprecated_member_use
-                                    color: Colors.black.withOpacity(0.05),
+                                    
+                                    color: Colors.black.withValues(alpha:0.05),
                                     blurRadius: 3,
                                     offset: const Offset(0, 2),
                                   ),
@@ -519,8 +519,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   Text(
                     'Matrix Solver Pro',
                     style: TextStyle(
-                      // ignore: deprecated_member_use
-                      color: Colors.white.withOpacity(0.9),
+                      
+                      color: Colors.white.withValues(alpha:0.9),
                       fontSize: 12,
                     ),
                   ),
@@ -694,8 +694,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                           'Matrix Solver Pro v1.0',
                           style: TextStyle(
                             color: Theme.of(context).colorScheme.onSurface
-                                // ignore: deprecated_member_use
-                                .withOpacity(0.7),
+                                
+                                .withValues(alpha:0.7),
                             fontSize: 12,
                           ),
                         ),
@@ -705,8 +705,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                           style: TextStyle(
                             fontSize: 10,
                             color: Theme.of(context).colorScheme.onSurface
-                                // ignore: deprecated_member_use
-                                .withOpacity(0.5),
+                                
+                                .withValues(alpha:0.5),
                           ),
                         ),
                       ],
@@ -755,8 +755,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      // ignore: deprecated_member_use
-                      color: Colors.white.withOpacity(0.2),
+                      
+                      color: Colors.white.withValues(alpha:0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.grid_on, color: Colors.white, size: 20),
@@ -792,8 +792,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: Colors.white.withOpacity(0.2),
+                        
+                        color: Colors.white.withValues(alpha:0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -1304,8 +1304,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      // ignore: deprecated_member_use
-                      color: Colors.white.withOpacity(0.2),
+                      
+                      color: Colors.white.withValues(alpha:0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.analytics, color: Colors.white, size: 20),
@@ -1327,8 +1327,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         Text(
                           lastOperationLabel,
                           style: TextStyle(
-                            // ignore: deprecated_member_use
-                            color: Colors.white.withOpacity(0.9),
+                            
+                            color: Colors.white.withValues(alpha:0.9),
                             fontSize: 12,
                           ),
                           maxLines: 1,
@@ -1344,8 +1344,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: Colors.white.withOpacity(0.2),
+                        
+                        color: Colors.white.withValues(alpha:0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -1505,8 +1505,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  // ignore: deprecated_member_use
-                                  color: Colors.black.withOpacity(0.05),
+                                  
+                                  color: Colors.black.withValues(alpha:0.05),
                                   blurRadius: 8,
                                   offset: const Offset(0, 4),
                                 ),
@@ -1788,8 +1788,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
-              // ignore: deprecated_member_use
-              color: enabled ? color.withOpacity(0.3) : Colors.grey.shade200,
+              
+              color: enabled ? color.withValues(alpha:0.3) : Colors.grey.shade200,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1799,8 +1799,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
+                  
+                  color: enabled ? color.withValues(alpha:0.1) : Colors.grey.shade100,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1854,8 +1854,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
-              // ignore: deprecated_member_use
-              color: enabled ? color.withOpacity(0.2) : Colors.grey.shade200,
+              
+              color: enabled ? color.withValues(alpha:0.2) : Colors.grey.shade200,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1864,8 +1864,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
+                  
+                  color: enabled ? color.withValues(alpha:0.1) : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -1997,11 +1997,11 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        // ignore: deprecated_member_use
-        color: color.withOpacity(0.1),
+        
+        color: color.withValues(alpha:0.1),
         borderRadius: BorderRadius.circular(12),
-        // ignore: deprecated_member_use
-        border: Border.all(color: color.withOpacity(0.3)),
+        
+        border: Border.all(color: color.withValues(alpha:0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2043,8 +2043,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: iconColor.withOpacity(0.1),
+                  
+                  color: iconColor.withValues(alpha:0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 30, color: iconColor),
@@ -2215,8 +2215,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                             borderRadius: BorderRadius.circular(6),
                             boxShadow: [
                               BoxShadow(
-                                // ignore: deprecated_member_use
-                                color: Colors.black.withOpacity(0.05),
+                                
+                                color: Colors.black.withValues(alpha:0.05),
                                 blurRadius: 3,
                                 offset: const Offset(0, 2),
                               ),
@@ -2516,10 +2516,10 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            // ignore: deprecated_member_use
-                            const Color(0xFFEC4899).withOpacity(0.1),
-                            // ignore: deprecated_member_use
-                            const Color(0xFF8B5CF6).withOpacity(0.1),
+                            
+                            const Color(0xFFEC4899).withValues(alpha:0.1),
+                            
+                            const Color(0xFF8B5CF6).withValues(alpha:0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
@@ -2632,8 +2632,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   Widget build(BuildContext context) {
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
-        // ignore: deprecated_member_use
-        textScaleFactor: _displayScale,
+        
+        textScaler: TextScaler.linear(_displayScale),
       ),
       child: Scaffold(
         key: _scaffoldKey,
