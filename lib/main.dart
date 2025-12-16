@@ -75,7 +75,7 @@ class MatrixAppState extends State<MatrixApp> {
           surfaceTintColor: Colors.transparent,
         ),
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        cardTheme: const CardTheme(color: Colors.white),
+        cardTheme: CardTheme(color: Colors.white),
       ),
 
       // Dark Theme
@@ -99,7 +99,7 @@ class MatrixAppState extends State<MatrixApp> {
           surfaceTintColor: Colors.transparent,
         ),
         scaffoldBackgroundColor: const Color(0xFF111827),
-        cardTheme: const CardTheme(color: Color(0xFF374151)),
+        cardTheme: CardTheme(color: const Color(0xFF374151)),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0xFF374151),

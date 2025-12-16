@@ -3,8 +3,16 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 class SupabaseManager {
   // --- KONFIGURASI SUPABASE ---
   // PENTING: Ganti URL dan KEY ini dengan project Anda sendiri!
-  static const String supabaseUrl = 'https://ujfkbeysiyuazuwmiqln.supabase.co';
-  static const String supabaseAnonKey = 'PASTE_KEY_HERE'; // Copy the "anon public" key here
+  // Gunakan Environment Variable jika ada, jika tidak gunakan default hardcoded
+  static const String supabaseUrl = String.fromEnvironment(
+    'SUPABASE_URL', 
+    defaultValue: 'https://ujfkbeysiyuazuwmiqln.supabase.co'
+  );
+  
+  static const String supabaseAnonKey = String.fromEnvironment(
+    'SUPABASE_KEY', 
+    defaultValue: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InVqZmtiZXlzaXl1YXp1d21pcWxuIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NjU4OTU1OTQsImV4cCI6MjA4MTQ3MTU5NH0.ewLsPP11DxRM-Ra0rkIvFdUelyBiRrr-m7qIX9dgJVI'
+  );
 
   static final SupabaseManager _instance = SupabaseManager._internal();
 
@@ -17,8 +25,9 @@ class SupabaseManager {
   bool _isInitialized = false;
 
   Future<void> initialize() async {
-    if (supabaseUrl == 'YOUR_SUPABASE_URL_HERE') {
-      print('Supabase belum dikonfigurasi. History tidak akan aktif.');
+    // Check if configuration is present
+    if (supabaseUrl.isEmpty || supabaseAnonKey.isEmpty) {
+      print('Supabase belum dikonfigurasi.');
       return;
     }
     
