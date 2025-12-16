@@ -67,15 +67,15 @@ class MatrixAppState extends State<MatrixApp> {
         ),
         useMaterial3: true,
         fontFamily: 'Inter',
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: true,
           backgroundColor: Colors.white,
-          foregroundColor: Color(0xFF1A1A1A),
+          foregroundColor: const Color(0xFF1A1A1A),
           elevation: 1,
           surfaceTintColor: Colors.transparent,
         ),
         scaffoldBackgroundColor: const Color(0xFFF8F9FA),
-        cardTheme: CardTheme(color: Colors.white),
+        cardTheme: const CardTheme(color: Colors.white),
       ),
 
       // Dark Theme
@@ -91,15 +91,15 @@ class MatrixAppState extends State<MatrixApp> {
         ),
         useMaterial3: true,
         fontFamily: 'Inter',
-        appBarTheme: const AppBarTheme(
+        appBarTheme: AppBarTheme(
           centerTitle: true,
-          backgroundColor: Color(0xFF1F2937),
+          backgroundColor: const Color(0xFF1F2937),
           foregroundColor: Colors.white,
           elevation: 0,
           surfaceTintColor: Colors.transparent,
         ),
         scaffoldBackgroundColor: const Color(0xFF111827),
-        cardTheme: CardTheme(color: const Color(0xFF374151)),
+        cardTheme: const CardTheme(color: Color(0xFF374151)),
         inputDecorationTheme: InputDecorationTheme(
           filled: true,
           fillColor: const Color(0xFF374151),
