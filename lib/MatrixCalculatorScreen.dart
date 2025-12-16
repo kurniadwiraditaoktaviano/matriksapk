@@ -21,6 +21,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   late List<List<TextEditingController>> controllers;
   int precision = 3;
   bool isCalculating = false;
+  double _displayScale = 1.0; // Tambah variabel untuk display scale
 
   List<double> solution = [];
   String lastOperationLabel = '';
@@ -446,19 +447,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     _showSuccess('Matrix cleared successfully');
   }
 
-  void _randomizeMatrix() {
-    final random = Random();
-    for (var row in controllers) {
-      for (var c in row) {
-        c.text = (random.nextDouble() * 10 - 5).toStringAsFixed(2);
-      }
-    }
-    setState(() {
-      solution = [];
-      operationStatus = 'Matrix randomized';
-    });
-  }
-
   // --- UI COMPONENTS ---
 
   PreferredSizeWidget _buildAppBar() {
@@ -608,8 +596,64 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   ),
 
                   const SizedBox(height: 20),
+
+                  // Display Scale Slider
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(12),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              Icon(Icons.text_fields, 
+                                  color: Theme.of(context).colorScheme.primary, size: 20),
+                              const SizedBox(width: 8),
+                              Text(
+                                'Display Scale',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w600,
+                                  color: Theme.of(context).colorScheme.onSurface,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            _getDisplayScaleLabel(),
+                            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
+                          ),
+                          Slider(
+                            value: _displayScale,
+                            min: 0.8,
+                            max: 1.2,
+                            divisions: 4,
+                            activeColor: Theme.of(context).colorScheme.primary,
+                            inactiveColor: Colors.grey.shade300,
+                            onChanged: (value) {
+                              setState(() => _displayScale = value);
+                            },
+                          ),
+                          const Text(
+                            'Adjusts the overall display size of the interface',
+                            style: TextStyle(
+                              fontSize: 11,
+                              color: Color(0xFF9CA3AF),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 20),
                   const Text(
-                    'MATRIX TOOLS',
+                    'APP TOOLS',
                     style: TextStyle(
                       color: Color(0xFF6B7280),
                       fontSize: 11,
@@ -618,7 +662,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   ),
                   const SizedBox(height: 12),
 
-                  // Matrix Tools
+                  // App Tools - Hanya menyisakan Help & Tutorial
                   Card(
                     elevation: 2,
                     shape: RoundedRectangleBorder(
@@ -626,30 +670,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                     ),
                     child: Column(
                       children: [
-                        ListTile(
-                          leading: Icon(Icons.refresh,
-                              color: Theme.of(context).colorScheme.primary, size: 22),
-                          title: const Text('Reset Matrix', style: TextStyle(fontSize: 14)),
-                          trailing: const Icon(Icons.chevron_right, size: 20),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _clearAll();
-                          },
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        ),
-                        const Divider(height: 0),
-                        ListTile(
-                          leading: Icon(Icons.shuffle,
-                              color: Theme.of(context).colorScheme.primary, size: 22),
-                          title: const Text('Randomize Values', style: TextStyle(fontSize: 14)),
-                          trailing: const Icon(Icons.chevron_right, size: 20),
-                          onTap: () {
-                            Navigator.pop(context);
-                            _randomizeMatrix();
-                          },
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                        ),
-                        const Divider(height: 0),
                         ListTile(
                           leading: Icon(Icons.help_outline,
                               color: Theme.of(context).colorScheme.primary, size: 22),
@@ -1005,7 +1025,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             ),
             child: Row(
               children: [
-                SizedBox(width: 40),
+                const SizedBox(width: 40),
                 // ignore: sized_box_for_whitespace
                 ...List.generate(cols, (j) => Container(
                   width: 50,
@@ -1179,8 +1199,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             Expanded(
               child: _buildSecondaryButton(),
             ),
-            const SizedBox(width: 12),
-            _buildRandomButton(),
           ],
         ),
       ],
@@ -1249,18 +1267,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildRandomButton() {
-    return OutlinedButton(
-      onPressed: _randomizeMatrix,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 16),
-        side: BorderSide(color: Colors.blue.shade300, width: 1.5),
-        minimumSize: const Size(0, 52),
-      ),
-      child: const Icon(Icons.shuffle, size: 20),
     );
   }
 
@@ -1469,7 +1475,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       colors: [
                         const Color(0xFFE3F2FD),
                         const Color(0xFFF3E5F5),
-                      ],
+                    ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
@@ -2616,43 +2622,55 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     );
   }
 
+  String _getDisplayScaleLabel() {
+    if (_displayScale < 0.9) return 'Small';
+    if (_displayScale < 1.1) return 'Medium';
+    return 'Large';
+  }
+
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: _buildAppBar(),
-      endDrawer: _buildSettingsDrawer(),
-      backgroundColor: const Color(0xFFF8F9FA),
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Column(
-            children: [
-              _buildMatrixInputCard(),
-              _buildSolutionCard(),
-              const SizedBox(height: 12),
-              Container(
-                padding: const EdgeInsets.all(12),
-                color: const Color(0xFFF3F4F6),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      Icons.code,
-                      size: 12,
-                      color: const Color(0xFF757575),
-                    ),
-                    const SizedBox(width: 6),
-                    Text(
-                      'Matrix Solver Pro • v1.0 • Precision: $precision',
-                      style: TextStyle(
-                        color: Colors.grey.shade600,
-                        fontSize: 10,
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        // ignore: deprecated_member_use
+        textScaleFactor: _displayScale,
+      ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: _buildAppBar(),
+        endDrawer: _buildSettingsDrawer(),
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                _buildMatrixInputCard(),
+                _buildSolutionCard(),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  color: const Color(0xFFF3F4F6),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.code,
+                        size: 12,
+                        color: const Color(0xFF757575),
                       ),
-                    ),
-                  ],
+                      const SizedBox(width: 6),
+                      Text(
+                        'Matrix Solver Pro • v1.0 • Precision: $precision • Scale: ${_getDisplayScaleLabel()}',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
