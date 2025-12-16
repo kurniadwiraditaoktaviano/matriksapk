@@ -1,8 +1,9 @@
-// lib/MatrixCalculatorScreen.dart
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'MatrixUtils.dart';
+import 'main.dart';
+import 'SupabaseManager.dart';
 
 class MatrixCalculatorScreen extends StatefulWidget {
   const MatrixCalculatorScreen({super.key});
@@ -190,6 +191,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         lastOperationLabel = 'Determinant Calculated';
         operationStatus = 'det(A) = ${det.toStringAsFixed(precision)}';
       });
+
+      // Save to History
+      await SupabaseManager().saveCalculation(
+        matrixA: A.toString(),
+        matrixB: '-',
+        operation: 'Determinant',
+        result: det.toStringAsFixed(precision),
+      );
     } catch (e) {
       _showError('Error calculating determinant: $e');
     } finally {
@@ -306,6 +315,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         lastOperationLabel = 'Inverse Calculated';
         operationStatus = 'A⁻¹ computed successfully';
       });
+
+      // Save to History
+      await SupabaseManager().saveCalculation(
+        matrixA: A.toString(),
+        matrixB: '-',
+        operation: 'Inverse',
+        result: inv.toString(),
+      );
     } catch (e) {
       _showError('Error calculating inverse: $e');
     } finally {
@@ -426,6 +443,16 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       if (obeSnapshots.isNotEmpty) {
         await _showOBEViewer(0);
       }
+      
+      // Save to History (only if unique solution found)
+      if (solution.isNotEmpty && lastOperationLabel.contains('Unique')) {
+        await SupabaseManager().saveCalculation(
+          matrixA: 'Augmented Matrix', 
+          matrixB: '-',
+          operation: 'SPL Solution',
+          result: solution.toString(),
+        );
+      }
     } finally {
       setState(() => isCalculating = false);
     }
@@ -539,6 +566,23 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       color: Color(0xFF6B7280),
                       fontSize: 11,
                       fontWeight: FontWeight.w600,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+
+                  // Dark Mode Switch
+                  Card(
+                    elevation: 2,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: SwitchListTile(
+                      title: const Text('Dark Mode', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14)),
+                      secondary: Icon(Icons.dark_mode, color: Theme.of(context).colorScheme.primary),
+                      value: MatrixApp.of(context)?.isDarkMode ?? false,
+                      onChanged: (val) {
+                         MatrixApp.of(context)?.toggleTheme();
+                      },
                     ),
                   ),
                   const SizedBox(height: 12),
@@ -670,6 +714,15 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                     ),
                     child: Column(
                       children: [
+                        ListTile(
+                          leading: Icon(Icons.history,
+                              color: Theme.of(context).colorScheme.primary, size: 22),
+                          title: const Text('Calculation History', style: TextStyle(fontSize: 14)),
+                          trailing: const Icon(Icons.chevron_right, size: 20),
+                          onTap: () => _showHistoryDialog(),
+                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                        ),
+                        Divider(height: 1),
                         ListTile(
                           leading: Icon(Icons.help_outline,
                               color: Theme.of(context).colorScheme.primary, size: 22),
@@ -2630,6 +2683,63 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     if (_displayScale < 0.9) return 'Small';
     if (_displayScale < 1.1) return 'Medium';
     return 'Large';
+  }
+
+  void _showHistoryDialog() async {
+    showDialog(
+      context: context, 
+      builder: (ctx) => const Center(child: CircularProgressIndicator())
+    );
+    
+    final history = await SupabaseManager().getHistory();
+    Navigator.pop(context); // Close loading
+
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
+        child: Column(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                color: Theme.of(context).colorScheme.primary,
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Icons.history, color: Colors.white),
+                  const SizedBox(width: 10),
+                  const Text('History', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                  const Spacer(),
+                  IconButton(onPressed: () => Navigator.pop(ctx), icon: const Icon(Icons.close, color: Colors.white))
+                ],
+              ),
+            ),
+            Expanded(
+              child: history.isEmpty 
+                  ? const Center(child: Text('No history found')) 
+                  : ListView.separated(
+                      padding: const EdgeInsets.all(12),
+                      itemCount: history.length,
+                      separatorBuilder: (_, __) => const Divider(),
+                      itemBuilder: (context, index) {
+                        final item = history[index];
+                        return ListTile(
+                          title: Text(item['operation'] ?? 'Unknown', style: const TextStyle(fontWeight: FontWeight.bold)),
+                          subtitle: Text('Result: ${item['result'] ?? ''}'),
+                          trailing: Text(
+                            (item['created_at'] as String).substring(0, 10),
+                            style: const TextStyle(fontSize: 10, color: Colors.grey),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   @override
