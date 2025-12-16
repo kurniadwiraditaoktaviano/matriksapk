@@ -175,6 +175,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 const SizedBox(width: 8),
                 _buildInfoChip(
                   icon: Icons.compare_arrows,
+                  // ignore: unnecessary_brace_in_string_interps
                   label: '${rows} × $rows',
                   color: Colors.blue,
                 ),
@@ -1005,6 +1006,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             child: Row(
               children: [
                 SizedBox(width: 40),
+                // ignore: sized_box_for_whitespace
                 ...List.generate(cols, (j) => Container(
                   width: 50,
                   child: Center(
@@ -1018,6 +1020,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                     ),
                   ),
                 )),
+                // ignore: sized_box_for_whitespace
                 Container(
                   width: 50,
                   child: Center(
@@ -1054,6 +1057,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             ),
             child: Row(
               children: [
+                // ignore: sized_box_for_whitespace
                 Container(
                   width: 40,
                   child: Center(
@@ -1317,6 +1321,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         Text(
                           lastOperationLabel,
                           style: TextStyle(
+                            // ignore: deprecated_member_use
                             color: Colors.white.withOpacity(0.9),
                             fontSize: 12,
                           ),
