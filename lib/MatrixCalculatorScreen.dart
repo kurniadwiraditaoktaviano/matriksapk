@@ -819,9 +819,13 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   const SizedBox(height: 16),
                   
                   // Matrix Grid
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: _buildMatrixGrid(),
+                  Scrollbar(
+                    thumbVisibility: true,
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.only(bottom: 12),
+                      child: _buildMatrixGrid(),
+                    ),
                   ),
                   const SizedBox(height: 16),
                   
@@ -1028,7 +1032,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 const SizedBox(width: 40),
                 // ignore: sized_box_for_whitespace
                 ...List.generate(cols, (j) => Container(
-                  width: 50,
+                  width: 65,
                   child: Center(
                     child: Text(
                       'x${j+1}',
@@ -1042,7 +1046,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 )),
                 // ignore: sized_box_for_whitespace
                 Container(
-                  width: 50,
+                  width: 65,
                   child: Center(
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
@@ -1102,7 +1106,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   ),
                 ),
                 ...List.generate(cols, (j) => Container(
-                  width: 50,
+                  width: 65,
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: TextField(
                     controller: controllers[i][j],
@@ -1144,7 +1148,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   ),
                 )),
                 Container(
-                  width: 50,
+                  width: 65,
                   padding: const EdgeInsets.symmetric(horizontal: 2),
                   child: TextField(
                     controller: controllers[i][cols],
@@ -2640,36 +2644,39 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         appBar: _buildAppBar(),
         endDrawer: _buildSettingsDrawer(),
         backgroundColor: const Color(0xFFF8F9FA),
-        body: SafeArea(
-          child: SingleChildScrollView(
-            child: Column(
-              children: [
-                _buildMatrixInputCard(),
-                _buildSolutionCard(),
-                const SizedBox(height: 12),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  color: const Color(0xFFF3F4F6),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(
-                        Icons.code,
-                        size: 12,
-                        color: const Color(0xFF757575),
-                      ),
-                      const SizedBox(width: 6),
-                      Text(
-                        'Matrix Solver Pro • v1.0 • Precision: $precision • Scale: ${_getDisplayScaleLabel()}',
-                        style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 10,
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          child: SafeArea(
+            child: SingleChildScrollView(
+              child: Column(
+                children: [
+                  _buildMatrixInputCard(),
+                  _buildSolutionCard(),
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    color: const Color(0xFFF3F4F6),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(
+                          Icons.code,
+                          size: 12,
+                          color: const Color(0xFF757575),
                         ),
-                      ),
-                    ],
+                        const SizedBox(width: 6),
+                        Text(
+                          'Matrix Solver Pro • v1.0 • Precision: $precision • Scale: ${_getDisplayScaleLabel()}',
+                          style: TextStyle(
+                            color: Colors.grey.shade600,
+                            fontSize: 10,
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
         ),
