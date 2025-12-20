@@ -1,8 +1,11 @@
-// lib/MatrixCalculatorScreen.dart
+// ignore: file_names
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'MatrixUtils.dart';
+import 'ProfileScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MatrixCalculatorScreen extends StatefulWidget {
   const MatrixCalculatorScreen({super.key});
@@ -21,7 +24,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   late List<List<TextEditingController>> controllers;
   int precision = 3;
   bool isCalculating = false;
-  double _displayScale = 1.0; // Tambah variabel untuk display scale
+  double _displayScale = 1.0;
 
   List<double> solution = [];
   String lastOperationLabel = '';
@@ -33,6 +36,11 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
   late AnimationController _animationController;
   late Animation<double> _fadeAnimation;
+
+  // Responsive constants
+  double get _contentPadding => 12.0;
+  double get _buttonHeight => 48.0;
+  double get _cardMargin => 8.0;
 
   @override
   void initState() {
@@ -176,7 +184,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 const SizedBox(width: 8),
                 _buildInfoChip(
                   icon: Icons.compare_arrows,
-                  // ignore: unnecessary_brace_in_string_interps
                   label: '${rows} × $rows',
                   color: Colors.blue,
                 ),
@@ -259,8 +266,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                                 borderRadius: BorderRadius.circular(6),
                                 boxShadow: [
                                   BoxShadow(
-                                    
-                                    color: Colors.black.withValues(alpha:0.05),
+                                    // ignore: deprecated_member_use
+                                    color: Colors.black.withOpacity(0.05),
                                     blurRadius: 3,
                                     offset: const Offset(0, 2),
                                   ),
@@ -458,14 +465,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.grid_on, color: Theme.of(context).colorScheme.primary, size: 20),
-          const SizedBox(width: 8),
+          Icon(Icons.grid_on, color: Theme.of(context).colorScheme.primary, size: 18),
+          const SizedBox(width: 6),
           const Text(
             'MATRIX SOLVER',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 16,
-              letterSpacing: 0.5,
+              fontSize: 14,
+              letterSpacing: 0.3,
             ),
           ),
         ],
@@ -473,252 +480,239 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       actions: [
         IconButton(
           onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary, size: 22),
+          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary, size: 20),
           tooltip: 'Settings',
           padding: const EdgeInsets.all(8),
         ),
       ],
-      toolbarHeight: 56,
+      toolbarHeight: 52,
+      elevation: 1,
     );
   }
 
-  Widget _buildSettingsDrawer() {
-    return Drawer(
-      width: MediaQuery.of(context).size.width * 0.85,
-      child: Column(
-        children: [
-          Container(
-            height: 160,
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  Theme.of(context).colorScheme.primary,
-                  Theme.of(context).colorScheme.secondary,
-                ],
-                begin: Alignment.topLeft,
-                end: Alignment.bottomRight,
-              ),
-            ),
-            child: Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.end,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Icon(Icons.settings, color: Colors.white, size: 32),
-                  const SizedBox(height: 12),
-                  const Text(
-                    'SETTINGS',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                      fontWeight: FontWeight.w700,
+Widget _buildSettingsDrawer() {
+    return FutureBuilder(
+      future: Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', 'user_hp_saya')
+          .maybeSingle(),
+      builder: (context, snapshot) {
+        
+        String displayName = 'Pengguna Baru';
+        String displaySub = 'Ketuk untuk isi nama';
+
+        if (snapshot.hasData && snapshot.data != null) {
+          final data = snapshot.data as Map<String, dynamic>;
+          displayName = data['full_name'] ?? 'Pengguna';
+          displaySub = data['university'] ?? 'Matrix Solver Pro';
+        }
+
+        return Drawer(
+          width: MediaQuery.of(context).size.width * 0.85,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // HEADER DRAWER
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(context); 
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                    setState(() {}); // Refresh setelah kembali
+                  },
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                // ignore: deprecated_member_use
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                child: const Icon(Icons.person, color: Colors.white),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Text(
+                                      displayName, 
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      displaySub,
+                                      style: TextStyle(
+                                        // ignore: deprecated_member_use
+                                        // ignore: deprecated_member_use
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ],
+                                ),
+                              ),
+                              const Icon(Icons.edit, color: Colors.white70, size: 16),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    'Matrix Solver Pro',
-                    style: TextStyle(
+                ),
+
+                // MENU LAINNYA
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    children: [
+                      const Text('DISPLAY SETTINGS', style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
                       
-                      color: Colors.white.withValues(alpha:0.9),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ),
-          Expanded(
-            child: SingleChildScrollView(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  const Text(
-                    'DISPLAY SETTINGS',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  
-                  // Precision Slider
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                      // Slider Precision
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.precision_manufacturing, 
-                                  color: Theme.of(context).colorScheme.primary, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Decimal Precision',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                  fontSize: 14,
-                                ),
+                              Row(children: [
+                                Icon(Icons.precision_manufacturing, size: 20, color: Theme.of(context).primaryColor), 
+                                SizedBox(width: 8), 
+                                Text('Decimal Precision', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
+                              ]),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Slider(
+                                      value: precision.toDouble(), 
+                                      min: 0, 
+                                      max: 10, 
+                                      divisions: 10, 
+                                      onChanged: (val) => setState(() => precision = val.toInt())
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      // ignore: deprecated_member_use
+                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '$precision',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text('$precision decimal places',
-                              style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12)),
-                          Slider(
-                            value: precision.toDouble(),
-                            min: 0,
-                            max: 10,
-                            divisions: 10,
-                            activeColor: Theme.of(context).colorScheme.primary,
-                            inactiveColor: Colors.grey.shade300,
-                            onChanged: (value) {
-                              setState(() => precision = value.toInt());
-                            },
-                          ),
-                          const Text(
-                            'Controls number of decimal places shown in results',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-
-                  const SizedBox(height: 20),
-
-                  // Display Scale Slider
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Padding(
-                      padding: const EdgeInsets.all(12),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Row(
+                      const SizedBox(height: 20),
+                      
+                      // Slider Scale
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Icon(Icons.text_fields, 
-                                  color: Theme.of(context).colorScheme.primary, size: 20),
-                              const SizedBox(width: 8),
-                              Text(
-                                'Display Scale',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.w600,
-                                  color: Theme.of(context).colorScheme.onSurface,
-                                  fontSize: 14,
-                                ),
+                              Row(children: [
+                                Icon(Icons.text_fields, size: 20, color: Theme.of(context).primaryColor), 
+                                SizedBox(width: 8), 
+                                Text('Display Scale', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
+                              ]),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Slider(
+                                      value: _displayScale, 
+                                      min: 0.8, 
+                                      max: 1.2, 
+                                      divisions: 4, 
+                                      onChanged: (val) => setState(() => _displayScale = val)
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      // ignore: deprecated_member_use
+                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _getDisplayScaleLabel(),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
                               ),
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Text(
-                            _getDisplayScaleLabel(),
-                            style: const TextStyle(color: Color(0xFF6B7280), fontSize: 12),
-                          ),
-                          Slider(
-                            value: _displayScale,
-                            min: 0.8,
-                            max: 1.2,
-                            divisions: 4,
-                            activeColor: Theme.of(context).colorScheme.primary,
-                            inactiveColor: Colors.grey.shade300,
-                            onChanged: (value) {
-                              setState(() => _displayScale = value);
-                            },
-                          ),
-                          const Text(
-                            'Adjusts the overall display size of the interface',
-                            style: TextStyle(
-                              fontSize: 11,
-                              color: Color(0xFF9CA3AF),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
+                      const SizedBox(height: 20),
 
-                  const SizedBox(height: 20),
-                  const Text(
-                    'APP TOOLS',
-                    style: TextStyle(
-                      color: Color(0xFF6B7280),
-                      fontSize: 11,
-                      fontWeight: FontWeight.w600,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-
-                  // App Tools - Hanya menyisakan Help & Tutorial
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: Icon(Icons.help_outline,
-                              color: Theme.of(context).colorScheme.primary, size: 22),
-                          title: const Text('Help & Tutorial', style: TextStyle(fontSize: 14)),
-                          trailing: const Icon(Icons.chevron_right, size: 20),
+                      // Help
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: ListTile(
+                          leading: Icon(Icons.help_outline, color: Theme.of(context).primaryColor),
+                          title: const Text('Help & Tutorial'),
                           onTap: () => _showHelpDialog(),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                         ),
-                      ],
-                    ),
+                      ),
+                      SizedBox(height: 20),
+                    ],
                   ),
-
-                  const SizedBox(height: 20),
-                  const Divider(),
-                  const SizedBox(height: 12),
-
-                  // App Info
-                  Center(
-                    child: Column(
-                      children: [
-                        Text(
-                          'Matrix Solver Pro v1.0',
-                          style: TextStyle(
-                            color: Theme.of(context).colorScheme.onSurface
-                                
-                                .withValues(alpha:0.7),
-                            fontSize: 12,
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          'Linear Algebra Toolkit',
-                          style: TextStyle(
-                            fontSize: 10,
-                            color: Theme.of(context).colorScheme.onSurface
-                                
-                                .withValues(alpha:0.5),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                ],
-              ),
+                ),
+              ],
             ),
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -727,7 +721,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       opacity: _fadeAnimation,
       child: Card(
         elevation: 4,
-        margin: const EdgeInsets.all(12),
+        margin: EdgeInsets.all(_cardMargin),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -755,8 +749,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      
-                      color: Colors.white.withValues(alpha:0.2),
+                      // ignore: deprecated_member_use
+                      color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.grid_on, color: Colors.white, size: 20),
@@ -792,8 +786,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        
-                        color: Colors.white.withValues(alpha:0.2),
+                        // ignore: deprecated_member_use
+                        color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -1009,6 +1003,10 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   }
 
   Widget _buildMatrixGrid() {
+    final cellWidth = MediaQuery.of(context).size.width / (cols + 3) - 10;
+    // ignore: unused_local_variable
+    final cellHeight = 45.0;
+
     return Container(
       decoration: BoxDecoration(
         border: Border.all(color: const Color(0xFFE5E7EB)),
@@ -1016,168 +1014,171 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       ),
       child: Column(
         children: [
-          // Header
+          // Header yang lebih kompak
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8),
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
             decoration: BoxDecoration(
               color: const Color(0xFFF9FAFB),
               border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
             ),
-            child: Row(
-              children: [
-                const SizedBox(width: 40),
-                // ignore: sized_box_for_whitespace
-                ...List.generate(cols, (j) => Container(
-                  width: 50,
-                  child: Center(
-                    child: Text(
-                      'x${j+1}',
-                      style: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF374151),
-                        fontSize: 12,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  ...List.generate(cols, (j) => SizedBox(
+                    width: cellWidth,
+                    child: Center(
+                      child: Text(
+                        'x${j+1}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                          fontSize: 11,
+                        ),
+                      ),
+                    ),
+                  )),
+                  SizedBox(
+                    width: cellWidth,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.arrow_right_alt, 
+                              size: 12, color: Colors.red.shade600),
+                          const SizedBox(width: 2),
+                          Text(
+                            'b',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: Colors.red.shade600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
                   ),
-                )),
-                // ignore: sized_box_for_whitespace
-                Container(
-                  width: 50,
-                  child: Center(
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.arrow_right_alt, 
-                            size: 14, color: Colors.red.shade600),
-                        const SizedBox(width: 2),
-                        Text(
-                          'b',
-                          style: TextStyle(
-                            fontWeight: FontWeight.w800,
-                            color: Colors.red.shade600,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
           ),
 
-          // Rows
+          // Rows dengan input yang lebih besar untuk touch
           ...List.generate(rows, (i) => Container(
-            padding: const EdgeInsets.symmetric(vertical: 6),
+            padding: const EdgeInsets.symmetric(vertical: 4),
             decoration: BoxDecoration(
               color: i % 2 == 0 ? Colors.white : const Color(0xFFFCFCFC),
               border: i < rows - 1
                 ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
                 : null,
             ),
-            child: Row(
-              children: [
-                // ignore: sized_box_for_whitespace
-                Container(
-                  width: 40,
-                  child: Center(
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 6,
-                        vertical: 2,
-                      ),
-                      decoration: BoxDecoration(
-                        color: const Color(0xFFF3F4F6),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        'R${i+1}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF6B7280),
-                          fontSize: 10,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 40,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'R${i+1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF6B7280),
+                            fontSize: 9,
+                          ),
                         ),
                       ),
                     ),
                   ),
-                ),
-                ...List.generate(cols, (j) => Container(
-                  width: 50,
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: TextField(
-                    controller: controllers[i][j],
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                    ),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                  ...List.generate(cols, (j) => Container(
+                    width: cellWidth,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: TextField(
+                      controller: controllers[i][j],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
                       ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(
-                          color: Theme.of(context).colorScheme.primary,
-                          width: 1.5,
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                         ),
-                      ),
-                      filled: true,
-                      fillColor: Colors.white,
-                      isDense: true,
-                    ),
-                    keyboardType: const TextInputType.numberWithOptions(
-                      decimal: true,
-                      signed: true,
-                    ),
-                    inputFormatters: [
-                      FilteringTextInputFormatter.allow(
-                        RegExp(r'[-0-9.,/]+'),
-                      ),
-                    ],
-                  ),
-                )),
-                Container(
-                  width: 50,
-                  padding: const EdgeInsets.symmetric(horizontal: 2),
-                  child: TextField(
-                    controller: controllers[i][cols],
-                    textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 12,
-                      fontWeight: FontWeight.w700,
-                      color: Colors.red.shade600,
-                    ),
-                    decoration: InputDecoration(
-                      contentPadding: const EdgeInsets.symmetric(vertical: 10),
-                      border: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(color: Colors.red.shade300),
-                      ),
-                      enabledBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(color: Colors.red.shade300),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderRadius: BorderRadius.circular(6),
-                        borderSide: BorderSide(
-                          color: Colors.red.shade600,
-                          width: 1.5,
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
                         ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1.5,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
                       ),
-                      filled: true,
-                      fillColor: Colors.red.shade50,
-                      isDense: true,
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[-0-9.,/]+'),
+                        ),
+                      ],
+                    ),
+                  )),
+                  Container(
+                    width: cellWidth,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: TextField(
+                      controller: controllers[i][cols],
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.red.shade600,
+                      ),
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Colors.red.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Colors.red.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(
+                            color: Colors.red.shade600,
+                            width: 1.5,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.red.shade50,
+                        isDense: true,
+                      ),
                     ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
           )),
         ],
@@ -1209,38 +1210,38 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return ElevatedButton(
       onPressed: isCalculating ? null : _onCalculateSPL,
       style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(12),
         ),
-        minimumSize: const Size(double.infinity, 52),
+        minimumSize: Size(double.infinity, _buttonHeight),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: isCalculating
             ? [
                 SizedBox(
-                  width: 18,
-                  height: 18,
+                  width: 16,
+                  height: 16,
                   child: CircularProgressIndicator(
                     strokeWidth: 2,
                     valueColor: AlwaysStoppedAnimation(Colors.white),
                   ),
                 ),
-                const SizedBox(width: 10),
+                const SizedBox(width: 8),
                 const Text(
                   'SOLVING...',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
                 ),
               ]
             : [
-                Icon(Icons.calculate, size: 20),
-                const SizedBox(width: 10),
+                Icon(Icons.calculate, size: 18),
+                const SizedBox(width: 8),
                 const Text(
                   'SOLVE SYSTEM',
                   style: TextStyle(
                     fontWeight: FontWeight.w700,
-                    fontSize: 14,
+                    fontSize: 13,
                   ),
                 ),
               ],
@@ -1252,18 +1253,18 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return OutlinedButton(
       onPressed: _clearAll,
       style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 16),
+        padding: const EdgeInsets.symmetric(vertical: 14),
         side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-        minimumSize: const Size(0, 52),
+        minimumSize: Size(0, _buttonHeight),
       ),
       child: const Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Icon(Icons.clear, size: 18),
+          Icon(Icons.clear, size: 16),
           SizedBox(width: 6),
           Text(
             'CLEAR',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 13),
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
           ),
         ],
       ),
@@ -1277,7 +1278,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
       opacity: _fadeAnimation,
       child: Card(
         elevation: 4,
-        margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        margin: EdgeInsets.symmetric(horizontal: _cardMargin, vertical: 8),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(16),
         ),
@@ -1304,8 +1305,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                   Container(
                     padding: const EdgeInsets.all(8),
                     decoration: BoxDecoration(
-                      
-                      color: Colors.white.withValues(alpha:0.2),
+                      // ignore: deprecated_member_use
+                      color: Colors.white.withOpacity(0.2),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.analytics, color: Colors.white, size: 20),
@@ -1327,8 +1328,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         Text(
                           lastOperationLabel,
                           style: TextStyle(
-                            
-                            color: Colors.white.withValues(alpha:0.9),
+                            // ignore: deprecated_member_use
+                            color: Colors.white.withOpacity(0.9),
                             fontSize: 12,
                           ),
                           maxLines: 1,
@@ -1344,8 +1345,9 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                         vertical: 4,
                       ),
                       decoration: BoxDecoration(
-                        
-                        color: Colors.white.withValues(alpha:0.2),
+                        // ignore: deprecated_member_use
+                        // ignore: deprecated_member_use
+                        color: Colors.white.withOpacity(0.2),
                         borderRadius: BorderRadius.circular(16),
                       ),
                       child: Text(
@@ -1493,22 +1495,22 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       ),
                       const SizedBox(height: 12),
                       Wrap(
-                        spacing: 10,
-                        runSpacing: 10,
+                        spacing: 8,
+                        runSpacing: 8,
                         alignment: WrapAlignment.center,
                         children: List.generate(solution.length, (i) {
                           return Container(
-                            width: 80,
-                            padding: const EdgeInsets.all(12),
+                            width: 70,
+                            padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
                               color: Colors.white,
                               borderRadius: BorderRadius.circular(10),
                               boxShadow: [
                                 BoxShadow(
-                                  
-                                  color: Colors.black.withValues(alpha:0.05),
-                                  blurRadius: 8,
-                                  offset: const Offset(0, 4),
+                                  // ignore: deprecated_member_use
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
                                 ),
                               ],
                             ),
@@ -1519,14 +1521,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                                   style: TextStyle(
                                     fontWeight: FontWeight.w800,
                                     color: Theme.of(context).colorScheme.primary,
-                                    fontSize: 12,
+                                    fontSize: 11,
                                   ),
                                 ),
-                                const SizedBox(height: 6),
+                                const SizedBox(height: 4),
                                 Text(
                                   solution[i].toStringAsFixed(precision),
                                   style: const TextStyle(
-                                    fontSize: 16,
+                                    fontSize: 14,
                                     fontWeight: FontWeight.w800,
                                     color: Color(0xFF1F2937),
                                     fontFamily: 'Monospace',
@@ -1606,9 +1608,10 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            mainAxisSpacing: 12,
-            crossAxisSpacing: 12,
-            childAspectRatio: 1.2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.4,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
             children: [
               _buildOperationCard(
                 title: 'Determinant',
@@ -1616,7 +1619,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 color: const Color(0xFF10B981),
                 enabled: isSquare,
                 onTap: _onCalculateDet,
-                description: 'Calculate det(A)',
+                description: 'det(A)',
               ),
               _buildOperationCard(
                 title: 'Inverse',
@@ -1624,7 +1627,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 color: const Color(0xFF8B5CF6),
                 enabled: isSquare,
                 onTap: _onCalculateInverse,
-                description: 'Compute A⁻¹',
+                description: 'A⁻¹',
               ),
               _buildOperationCard(
                 title: 'Transpose',
@@ -1632,7 +1635,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 color: const Color(0xFFF59E0B),
                 enabled: true,
                 onTap: _onCalculateTranspose,
-                description: 'Find Aᵀ',
+                description: 'Aᵀ',
               ),
               _buildOperationCard(
                 title: 'Rank',
@@ -1640,7 +1643,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                 color: const Color(0xFFEF4444),
                 enabled: true,
                 onTap: _onCalculateRank,
-                description: 'Matrix rank',
+                description: 'rank(A)',
               ),
             ],
           ),
@@ -1788,8 +1791,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
-              
-              color: enabled ? color.withValues(alpha:0.3) : Colors.grey.shade200,
+              // ignore: deprecated_member_use
+              color: enabled ? color.withOpacity(0.3) : Colors.grey.shade200,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1799,8 +1802,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(
-                  
-                  color: enabled ? color.withValues(alpha:0.1) : Colors.grey.shade100,
+                  // ignore: deprecated_member_use
+                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
                   shape: BoxShape.circle,
                 ),
                 child: Icon(
@@ -1854,8 +1857,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             border: Border.all(
-              
-              color: enabled ? color.withValues(alpha:0.2) : Colors.grey.shade200,
+              // ignore: deprecated_member_use
+              color: enabled ? color.withOpacity(0.2) : Colors.grey.shade200,
             ),
             borderRadius: BorderRadius.circular(12),
           ),
@@ -1864,8 +1867,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(10),
                 decoration: BoxDecoration(
-                  
-                  color: enabled ? color.withValues(alpha:0.1) : Colors.grey.shade100,
+                  // ignore: deprecated_member_use
+                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
                   borderRadius: BorderRadius.circular(10),
                 ),
                 child: Icon(
@@ -1997,11 +2000,11 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
       decoration: BoxDecoration(
-        
-        color: color.withValues(alpha:0.1),
+        // ignore: deprecated_member_use
+        color: color.withOpacity(0.1),
         borderRadius: BorderRadius.circular(12),
-        
-        border: Border.all(color: color.withValues(alpha:0.3)),
+        // ignore: deprecated_member_use
+        border: Border.all(color: color.withOpacity(0.3)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -2043,8 +2046,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
               Container(
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  
-                  color: iconColor.withValues(alpha:0.1),
+                  // ignore: deprecated_member_use
+                  color: iconColor.withOpacity(0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(icon, size: 30, color: iconColor),
@@ -2215,8 +2218,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                             borderRadius: BorderRadius.circular(6),
                             boxShadow: [
                               BoxShadow(
-                                
-                                color: Colors.black.withValues(alpha:0.05),
+                                // ignore: deprecated_member_use
+                                color: Colors.black.withOpacity(0.05),
                                 blurRadius: 3,
                                 offset: const Offset(0, 2),
                               ),
@@ -2516,10 +2519,10 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       decoration: BoxDecoration(
                         gradient: LinearGradient(
                           colors: [
-                            
-                            const Color(0xFFEC4899).withValues(alpha:0.1),
-                            
-                            const Color(0xFF8B5CF6).withValues(alpha:0.1),
+                            // ignore: deprecated_member_use
+                            const Color(0xFFEC4899).withOpacity(0.1),
+                            // ignore: deprecated_member_use
+                            const Color(0xFF8B5CF6).withOpacity(0.1),
                           ],
                         ),
                         borderRadius: BorderRadius.circular(10),
@@ -2632,7 +2635,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   Widget build(BuildContext context) {
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
-        
         textScaler: TextScaler.linear(_displayScale),
       ),
       child: Scaffold(
@@ -2642,14 +2644,19 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         backgroundColor: const Color(0xFFF8F9FA),
         body: SafeArea(
           child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: _contentPadding),
             child: Column(
               children: [
+                const SizedBox(height: 8),
                 _buildMatrixInputCard(),
                 _buildSolutionCard(),
                 const SizedBox(height: 12),
                 Container(
                   padding: const EdgeInsets.all(12),
-                  color: const Color(0xFFF3F4F6),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
@@ -2660,7 +2667,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Matrix Solver Pro • v1.0 • Precision: $precision • Scale: ${_getDisplayScaleLabel()}',
+                        'Matrix Solver Pro • v1.0 • Precision: $precision',
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 10,
@@ -2669,6 +2676,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
                     ],
                   ),
                 ),
+                const SizedBox(height: 16),
               ],
             ),
           ),

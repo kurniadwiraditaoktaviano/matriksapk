@@ -14,14 +14,14 @@ val keystorePropertiesFile = rootProject.file("key.properties")
 if (keystorePropertiesFile.exists()) {
     keystoreProperties.load(FileInputStream(keystorePropertiesFile))
 }
-
+// ...
 android {
     namespace = "com.fauzan.matriksapk"
     compileSdk = flutter.compileSdkVersion
 
-    // --- PENTING: KITA KUNCI KE VERSI NDK STABIL YANG SUDAH DIINSTALL ---
-    ndkVersion = "26.1.10909125"
-    // --------------------------------------------------------------------
+    // --- UBAH JADI INI (VERSI BARU) ---
+    ndkVersion = "27.0.12077973"
+    // ...
 
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_11
