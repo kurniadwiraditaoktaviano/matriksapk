@@ -20,7 +20,7 @@ android {
     compileSdk = flutter.compileSdkVersion
 
     // --- UBAH JADI INI (VERSI BARU) ---
-    ndkVersion = "27.0.12077973"
+    // ndkVersion = "27.0.12077973" // Comment out to use the default NDK version
     // ...
 
     compileOptions {
@@ -43,17 +43,21 @@ android {
     // --- 2. KONFIGURASI SIGNING (Rilis) ---
     signingConfigs {
         create("release") {
-            keyAlias = keystoreProperties["keyAlias"] as String
-            keyPassword = keystoreProperties["keyPassword"] as String
-            storeFile = keystoreProperties["storeFile"]?.let { file(it) }
-            storePassword = keystoreProperties["storePassword"] as String
+            if (keystoreProperties["storeFile"] != null) {
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+                storeFile = keystoreProperties.getProperty("storeFile")?.let { file(it) }
+                storePassword = keystoreProperties.getProperty("storePassword")
+            }
         }
     }
 
     buildTypes {
         getByName("release") {
             // Menggunakan konfigurasi signing di atas
-            signingConfig = signingConfigs.getByName("release")
+            if (keystoreProperties["storeFile"] != null) {
+                signingConfig = signingConfigs.getByName("release")
+            }
 
             // Karena kita pakai NDK 26, biasanya tidak butuh kode 'debugSymbolLevel' lagi.
             // Kode ini sudah bersih dan standar.
