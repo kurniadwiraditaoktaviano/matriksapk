@@ -1,5 +1,14 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
-<uses-permission android:name="android.permission.INTERNET" />
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    package="com.example.matriksapk">
+
+    <uses-permission android:name="android.permission.INTERNET"/> 
+
+    <application
+        android:label="Matrix Solver"
+        android:name="${applicationName}"
+        android:icon="@mipmap/ic_launcher">
+        </application>
+</manifest>
     <application
         android:label="matriksapk"
         android:name="${applicationName}"
