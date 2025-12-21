@@ -6,6 +6,8 @@ import 'dart:math';
 import 'MatrixUtils.dart';
 import 'ProfileScreen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+// ignore: unused_import
+import 'DeviceIdHelper.dart';
 
 class MatrixCalculatorScreen extends StatefulWidget {
   const MatrixCalculatorScreen({super.key});
@@ -308,7 +310,6 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
           ),
         ),
       );
-      
       setState(() {
         lastOperationLabel = 'Inverse Calculated';
         operationStatus = 'A⁻¹ computed successfully';
@@ -456,6 +457,17 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
   // --- UI COMPONENTS ---
 
+  // Fungsi helper untuk mengambil profil dengan ID dinamis
+  // ignore: unused_element
+  Future<Map<String, dynamic>?> _fetchUserProfile() async {
+    final myId = await DeviceIdHelper.getDeviceId();
+    return await Supabase.instance.client
+        .from('profiles')
+        .select()
+        .eq('id', myId)
+        .maybeSingle();
+  }
+
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
       backgroundColor: Colors.white,
@@ -492,11 +504,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
 Widget _buildSettingsDrawer() {
     return FutureBuilder(
-      future: Supabase.instance.client
-          .from('profiles')
-          .select()
-          .eq('id', 'user_hp_saya')
-          .maybeSingle(),
+      future: _fetchUserProfile(),
       builder: (context, snapshot) {
         
         String displayName = 'Pengguna Baru';
@@ -866,6 +874,7 @@ Widget _buildSettingsDrawer() {
     );
   }
 
+  // 1. WADAH UTAMA (Card)
   Widget _buildDimensionControls() {
     return Card(
       elevation: 2,
@@ -873,11 +882,13 @@ Widget _buildSettingsDrawer() {
         borderRadius: BorderRadius.circular(12),
       ),
       child: Padding(
-        padding: const EdgeInsets.all(16),
+        // Kurangi padding horizontal card sedikit agar ruang untuk tombol lebih luas
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
         child: Column(
           children: [
-            const Row(
-              children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
                 Icon(Icons.aspect_ratio, size: 18, color: Color(0xFF6B7280)),
                 SizedBox(width: 6),
                 Text(
@@ -891,25 +902,35 @@ Widget _buildSettingsDrawer() {
               ],
             ),
             const SizedBox(height: 12),
+            // Bagian Row Pengatur
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Pastikan terbagi rata
               children: [
-                _buildDimensionControl(
-                  label: 'ROWS',
-                  value: rows,
-                  onDecrease: rows > minDim ? () => _resize(rows - 1, cols) : null,
-                  onIncrease: rows < maxDim ? () => _resize(rows + 1, cols) : null,
+                // KONTROL ROWS (KIRI)
+                Expanded(
+                  child: _buildDimensionControl(
+                    label: 'ROWS',
+                    value: rows,
+                    onDecrease: rows > minDim ? () => _resize(rows - 1, cols) : null,
+                    onIncrease: rows < maxDim ? () => _resize(rows + 1, cols) : null,
+                  ),
                 ),
+                
+                // GARIS PEMISAH TENGAH
                 Container(
                   width: 1,
-                  height: 40,
+                  height: 32, // Tinggi garis disesuaikan
                   color: const Color(0xFFE5E7EB),
                 ),
-                _buildDimensionControl(
-                  label: 'COLUMNS',
-                  value: cols,
-                  onDecrease: cols > minDim ? () => _resize(rows, cols - 1) : null,
-                  onIncrease: cols < maxDim ? () => _resize(rows, cols + 1) : null,
+
+                // KONTROL COLUMNS (KANAN)
+                Expanded(
+                  child: _buildDimensionControl(
+                    label: 'COLUMNS',
+                    value: cols,
+                    onDecrease: cols > minDim ? () => _resize(rows, cols - 1) : null,
+                    onIncrease: cols < maxDim ? () => _resize(rows, cols + 1) : null,
+                  ),
                 ),
               ],
             ),
@@ -919,6 +940,7 @@ Widget _buildSettingsDrawer() {
     );
   }
 
+  // 2. ITEM KONTROL (Tombol - Angka - Tombol)
   Widget _buildDimensionControl({
     required String label,
     required int value,
@@ -935,19 +957,22 @@ Widget _buildSettingsDrawer() {
             color: Color(0xFF6B7280),
           ),
         ),
-        const SizedBox(height: 6),
+        const SizedBox(height: 8),
         Row(
-          mainAxisSize: MainAxisSize.min,
+          mainAxisAlignment: MainAxisAlignment.center, // KUNCI: Rata Tengah
+          mainAxisSize: MainAxisSize.min,            // Agar tidak melebar sembarangan
           children: [
             _buildControlButton(
               icon: Icons.remove,
               onPressed: onDecrease,
               isEnabled: onDecrease != null,
             ),
+            
+            // KOTAK ANGKA (Diperbaiki ukurannya agar tidak mendorong tombol keluar)
             Container(
-              width: 50,
-              padding: const EdgeInsets.symmetric(vertical: 6),
-              margin: const EdgeInsets.symmetric(horizontal: 10),
+              width: 36, // Lebar pas (tidak terlalu lebar)
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 6), // Jarak diperkecil (sebelumnya 10)
               decoration: BoxDecoration(
                 color: const Color(0xFFF3F4F6),
                 borderRadius: BorderRadius.circular(8),
@@ -956,12 +981,13 @@ Widget _buildSettingsDrawer() {
                 '$value',
                 textAlign: TextAlign.center,
                 style: const TextStyle(
-                  fontSize: 18,
+                  fontSize: 16, // Font sedikit disesuaikan
                   fontWeight: FontWeight.w800,
                   color: Color(0xFF1F2937),
                 ),
               ),
             ),
+            
             _buildControlButton(
               icon: Icons.add,
               onPressed: onIncrease,
@@ -973,34 +999,38 @@ Widget _buildSettingsDrawer() {
     );
   }
 
+  // 3. TOMBOL (+ dan -)
   Widget _buildControlButton({
     required IconData icon,
     required VoidCallback? onPressed,
     required bool isEnabled,
   }) {
     return Material(
-      borderRadius: BorderRadius.circular(8),
+      borderRadius: BorderRadius.circular(10),
       color: isEnabled
           ? Theme.of(context).colorScheme.primary
           : const Color(0xFFE5E7EB),
       child: InkWell(
-        borderRadius: BorderRadius.circular(8),
+        borderRadius: BorderRadius.circular(10),
         onTap: onPressed,
+        // Ukuran tombol 40x40 (Nyaman disentuh, tapi muat di layar)
         child: Container(
-          width: 32,
-          height: 32,
+          width: 40,  
+          height: 40,
+          alignment: Alignment.center, // Pastikan ikon di tengah tombol
           decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(8),
+            borderRadius: BorderRadius.circular(10),
           ),
           child: Icon(
             icon,
-            size: 16,
+            size: 20,
             color: isEnabled ? Colors.white : const Color(0xFF9CA3AF),
           ),
         ),
       ),
     );
   }
+
 
   Widget _buildMatrixGrid() {
     final cellWidth = MediaQuery.of(context).size.width / (cols + 3) - 10;

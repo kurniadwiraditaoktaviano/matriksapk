@@ -2,9 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-
-// ID Simpel untuk HP ini (Bisa diganti logika lain nanti)
-const String myDeviceID = 'user_hp_saya'; 
+import 'DeviceIdHelper.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -30,10 +28,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
   // Load data berdasarkan ID 'user_hp_saya'
   Future<void> _loadData() async {
     try {
+      final myId = await DeviceIdHelper.getDeviceId();
       final data = await Supabase.instance.client
           .from('profiles')
           .select()
-          .eq('id', myDeviceID)
+          .eq('id', myId)
           .maybeSingle();
       
       if (data != null && mounted) {
@@ -61,9 +60,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final myId = await DeviceIdHelper.getDeviceId();
       // Langsung simpan ke tabel publik
       await Supabase.instance.client.from('profiles').upsert({
-        'id': myDeviceID, // Kunci utama kita
+        'id': myId, // Kunci utama kita
         'full_name': _nameController.text.trim(),
         'university': _universityController.text.trim(),
         'updated_at': DateTime.now().toIso8601String(),
@@ -134,10 +134,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() => _isLoading = true);
 
     try {
+      final myId = await DeviceIdHelper.getDeviceId();
       await Supabase.instance.client
           .from('profiles')
           .delete()
-          .eq('id', myDeviceID);
+          .eq('id', myId);
 
       if (mounted) {
         setState(() {
