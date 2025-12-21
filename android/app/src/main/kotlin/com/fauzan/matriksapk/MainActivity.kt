@@ -1,4 +1,4 @@
-package com.example.matriksapk
+package com.fauzan.matriksapk
 
 import io.flutter.embedding.android.FlutterActivity
 

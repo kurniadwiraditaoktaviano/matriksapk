@@ -1,10 +1,13 @@
-// lib/MatrixCalculatorScreen.dart
+// ignore: file_names
+// ignore: file_names
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
-
-// Import MatrixUtils (MatrixOps) — pastikan lib/MatrixUtils.dart ada
 import 'MatrixUtils.dart';
+import 'ProfileScreen.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+// ignore: unused_import
+import 'DeviceIdHelper.dart';
 
 class MatrixCalculatorScreen extends StatefulWidget {
   const MatrixCalculatorScreen({super.key});
@@ -13,30 +16,55 @@ class MatrixCalculatorScreen extends StatefulWidget {
   State<MatrixCalculatorScreen> createState() => _MatrixCalculatorScreenState();
 }
 
-class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
+class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
+    with SingleTickerProviderStateMixin {
+  // --- STATE VARIABLES ---
   int rows = 4, cols = 4;
-  static const int maxDim = 6;
+  static const int maxDim = 8;
   static const int minDim = 1;
 
   late List<List<TextEditingController>> controllers;
-  int precision = 2;
+  int precision = 3;
+  bool isCalculating = false;
+  double _displayScale = 1.0;
 
   List<double> solution = [];
   String lastOperationLabel = '';
+  String operationStatus = 'Ready';
 
   List<List<List<double>>> obeSnapshots = [];
   List<String> obeDescriptions = [];
 
   final GlobalKey<ScaffoldState> _scaffoldKey = GlobalKey<ScaffoldState>();
+  late AnimationController _animationController;
+  late Animation<double> _fadeAnimation;
+
+  // Responsive constants
+  double get _contentPadding => 12.0;
+  double get _buttonHeight => 48.0;
+  double get _cardMargin => 8.0;
 
   @override
   void initState() {
     super.initState();
     _initControllers();
+    
+    _animationController = AnimationController(
+      duration: const Duration(milliseconds: 500),
+      vsync: this,
+    );
+    _fadeAnimation = Tween<double>(begin: 0, end: 1).animate(
+      CurvedAnimation(
+        parent: _animationController,
+        curve: Curves.easeInOut,
+      ),
+    );
+    _animationController.forward();
   }
 
   @override
   void dispose() {
+    _animationController.dispose();
     for (var row in controllers) {
       for (var c in row) {
         c.dispose();
@@ -48,7 +76,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
   void _initControllers() {
     controllers = List.generate(
       rows,
-      (i) => List.generate(cols + 1, (j) => TextEditingController(text: '0')),
+      (i) => List.generate(cols + 1, (j) => TextEditingController(text: j == i ? '1' : '0')),
     );
   }
 
@@ -57,16 +85,14 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
     final oldC = controllers.isNotEmpty ? controllers[0].length : 0;
     List<List<TextEditingController>> next = List.generate(
       newRows,
-      (i) => List.generate(newCols + 1, (j) => TextEditingController(text: '0')),
+      (i) => List.generate(
+        newCols + 1,
+        (j) => TextEditingController(
+          text: i < oldR && j < oldC ? controllers[i][j].text : '0',
+        ),
+      ),
     );
 
-    for (int i = 0; i < min(newRows, oldR); i++) {
-      for (int j = 0; j < min(newCols + 1, oldC); j++) {
-        next[i][j].text = controllers[i][j].text;
-      }
-    }
-
-    // dispose old controllers that are no longer used
     for (int i = 0; i < oldR; i++) {
       for (int j = 0; j < oldC; j++) {
         if (i >= newRows || j >= newCols + 1) {
@@ -82,11 +108,11 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
       solution = [];
       obeSnapshots.clear();
       obeDescriptions.clear();
+      operationStatus = 'Matrix resized to $newRows × $newCols';
     });
   }
 
   List<List<double>> _readAugmentedMatrix() {
-    // safe read — ensure controllers shape is correct
     final r = rows;
     final c = cols + 1;
     return List.generate(r, (i) {
@@ -106,10 +132,193 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
     });
   }
 
-  void _recordOBE(List<List<double>> mat, String desc) {
-    final snap = mat.map((r) => List<double>.from(r)).toList();
-    obeSnapshots.add(snap);
-    obeDescriptions.add(desc);
+  List<List<double>> _readMatrixAOnly() {
+    final aug = _readAugmentedMatrix();
+    return aug.map((row) => row.sublist(0, cols)).toList();
+  }
+
+  // --- LOGIC MATEMATIKA ---
+  Future<void> _onCalculateDet() async {
+    if (rows != cols) {
+      _showError('Determinant requires square matrix (Rows = Columns)');
+      return;
+    }
+    
+    setState(() => isCalculating = true);
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    try {
+      final A = _readMatrixAOnly();
+      final det = MatrixOps.determinant(A);
+
+      _showResultDialog(
+        title: 'Determinant',
+        icon: Icons.functions,
+        iconColor: const Color(0xFF10B981),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'det(A) =',
+              style: const TextStyle(
+                fontSize: 14,
+                color: Color(0xFF9CA3AF),
+              ),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              det.toStringAsFixed(6),
+              style: const TextStyle(
+                fontSize: 28,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFF1F2937),
+              ),
+            ),
+            const SizedBox(height: 16),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                _buildInfoChip(
+                  icon: Icons.info_outline,
+                  label: det.abs() < 1e-12 ? 'Singular' : 'Non-singular',
+                  color: det.abs() < 1e-12 ? Colors.orange : Colors.green,
+                ),
+                const SizedBox(width: 8),
+                _buildInfoChip(
+                  icon: Icons.compare_arrows,
+                  label: '${rows} × $rows',
+                  color: Colors.blue,
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+      
+      setState(() {
+        lastOperationLabel = 'Determinant Calculated';
+        operationStatus = 'det(A) = ${det.toStringAsFixed(precision)}';
+      });
+    } catch (e) {
+      _showError('Error calculating determinant: $e');
+    } finally {
+      setState(() => isCalculating = false);
+    }
+  }
+
+  Future<void> _onCalculateInverse() async {
+    if (rows != cols) {
+      _showError('Inverse requires square matrix (Rows = Columns)');
+      return;
+    }
+    
+    setState(() => isCalculating = true);
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    try {
+      final A = _readMatrixAOnly();
+      final inv = MatrixOps.inverse(A);
+
+      if (inv == null) {
+        _showError('Matrix is singular (Determinant = 0), no inverse exists.');
+        return;
+      }
+
+      _showResultDialog(
+        title: 'Matrix Inverse',
+        icon: Icons.swap_horiz,
+        iconColor: const Color(0xFF8B5CF6),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Text(
+                'A⁻¹ =',
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  fontSize: 16,
+                  color: Color(0xFF374151),
+                ),
+              ),
+              const SizedBox(height: 12),
+              Container(
+                decoration: BoxDecoration(
+                  border: Border.all(color: const Color(0xFFE5E7EB)),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                padding: const EdgeInsets.all(12),
+                child: SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Column(
+                    children: inv.asMap().entries.map((entry) {
+                      final i = entry.key;
+                      final row = entry.value;
+                      return Padding(
+                        padding: EdgeInsets.only(bottom: i < inv.length - 1 ? 8 : 0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: row.asMap().entries.map((cell) {
+                            return Container(
+                              width: 60,
+                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+                              margin: const EdgeInsets.symmetric(horizontal: 2),
+                              decoration: BoxDecoration(
+                                color: Colors.white,
+                                borderRadius: BorderRadius.circular(6),
+                                boxShadow: [
+                                  BoxShadow(
+                                    // ignore: deprecated_member_use
+                                    color: Colors.black.withOpacity(0.05),
+                                    blurRadius: 3,
+                                    offset: const Offset(0, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Text(
+                                cell.value.toStringAsFixed(precision),
+                                textAlign: TextAlign.center,
+                                style: const TextStyle(
+                                  fontSize: 11,
+                                  fontWeight: FontWeight.w500,
+                                  fontFamily: 'Monospace',
+                                ),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: () => _copyMatrixToClipboard(inv),
+                  icon: const Icon(Icons.copy, size: 16),
+                  label: const Text('Copy Matrix', style: TextStyle(fontSize: 13)),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFFF3F4F6),
+                    foregroundColor: const Color(0xFF374151),
+                    padding: const EdgeInsets.symmetric(vertical: 12),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+      setState(() {
+        lastOperationLabel = 'Inverse Calculated';
+        operationStatus = 'A⁻¹ computed successfully';
+      });
+    } catch (e) {
+      _showError('Error calculating inverse: $e');
+    } finally {
+      setState(() => isCalculating = false);
+    }
   }
 
   void _computeRREFAndSolution() {
@@ -120,7 +329,7 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
 
     obeSnapshots.clear();
     obeDescriptions.clear();
-    _recordOBE(mat, 'Matriks awal ([A | B])');
+    _recordOBE(mat, 'Initial Augmented Matrix [A | B]');
 
     int r = 0;
     for (int c = 0; c < cols && r < n; c++) {
@@ -134,15 +343,15 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
         final tmp = mat[sel];
         mat[sel] = mat[r];
         mat[r] = tmp;
-        _recordOBE(mat, 'Swap baris $sel dan baris $r');
+        _recordOBE(mat, 'Swap row $sel with row $r');
       }
 
       final pivot = mat[r][c];
-      if (pivot.abs() < 1e-15) continue; // avoid dividing by (near) zero
+      if (pivot.abs() < 1e-15) continue;
       for (int j = c; j < m; j++) {
         mat[r][j] /= pivot;
       }
-      _recordOBE(mat, 'Normalisasi baris $r (pivot di kolom $c dibuat 1)');
+      _recordOBE(mat, 'Normalize row $r (pivot at column $c = 1)');
 
       for (int i = 0; i < n; i++) {
         if (i == r) continue;
@@ -151,13 +360,12 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
         for (int j = c; j < m; j++) {
           mat[i][j] -= factor * mat[r][j];
         }
-        _recordOBE(mat, 'Eliminasi: gunakan baris $r untuk mengeliminasi entri pada baris $i');
+        _recordOBE(mat, 'Eliminate column $c in row $i');
       }
-
       r++;
     }
 
-    // Check inconsistent rows
+    // Check consistency
     for (int i = 0; i < n; i++) {
       bool allZero = true;
       for (int j = 0; j < cols; j++) {
@@ -166,7 +374,8 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
       if (allZero && mat[i][cols].abs() > 1e-9) {
         setState(() {
           solution = [];
-          lastOperationLabel = 'Sistem tidak konsisten (tidak ada solusi)';
+          lastOperationLabel = 'Inconsistent System';
+          operationStatus = 'No solution (inconsistent system)';
         });
         return;
       }
@@ -199,328 +408,1459 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
 
     setState(() {
       solution = unique ? sol : [];
-      lastOperationLabel = unique ? 'Solusi tunggal' : 'Solusi parametrik / banyak solusi';
+      lastOperationLabel = unique ? 'Unique Solution' : 'Parametric Solution';
+      operationStatus = unique 
+          ? 'System has unique solution' 
+          : 'System has infinite solutions';
     });
   }
 
-  void _onCalculate() {
-    _computeRREFAndSolution();
-    if (obeSnapshots.isNotEmpty) _showOBEViewer(0);
+  void _recordOBE(List<List<double>> mat, String desc) {
+    final snap = mat.map((r) => List<double>.from(r)).toList();
+    obeSnapshots.add(snap);
+    obeDescriptions.add(desc);
+  }
+
+  Future<void> _onCalculateSPL() async {
+    setState(() {
+      isCalculating = true;
+      operationStatus = 'Solving system...';
+    });
+    
+    await Future.delayed(const Duration(milliseconds: 100));
+    
+    try {
+      _computeRREFAndSolution();
+      if (obeSnapshots.isNotEmpty) {
+        await _showOBEViewer(0);
+      }
+    } finally {
+      setState(() => isCalculating = false);
+    }
   }
 
   void _clearAll() {
-    for (var row in controllers) for (var c in row) {
-      c.text = '0';
+    for (var row in controllers) {
+      for (var c in row) {
+        c.text = '0';
+      }
     }
     setState(() {
       solution = [];
       lastOperationLabel = '';
+      operationStatus = 'Matrix cleared';
       obeSnapshots.clear();
       obeDescriptions.clear();
     });
+    _showSuccess('Matrix cleared successfully');
+  }
+
+  // --- UI COMPONENTS ---
+
+  // Fungsi helper untuk mengambil profil dengan ID dinamis
+  // ignore: unused_element
+  Future<Map<String, dynamic>?> _fetchUserProfile() async {
+    final myId = await DeviceIdHelper.getDeviceId();
+    return await Supabase.instance.client
+        .from('profiles')
+        .select()
+        .eq('id', myId)
+        .maybeSingle();
   }
 
   PreferredSizeWidget _buildAppBar() {
     return AppBar(
-      backgroundColor: Colors.deepPurple,
-      title: const Text('Matrix Solver'),
+      backgroundColor: Colors.white,
+      foregroundColor: const Color(0xFF1A1A1A),
+      centerTitle: true,
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(Icons.grid_on, color: Theme.of(context).colorScheme.primary, size: 18),
+          const SizedBox(width: 6),
+          const Text(
+            'MATRIX SOLVER',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 14,
+              letterSpacing: 0.3,
+            ),
+          ),
+        ],
+      ),
       actions: [
         IconButton(
           onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-          icon: const Icon(Icons.settings),
-        )
+          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary, size: 20),
+          tooltip: 'Settings',
+          padding: const EdgeInsets.all(8),
+        ),
       ],
+      toolbarHeight: 52,
+      elevation: 1,
     );
   }
 
-  // ----------------- NEW: LU steps handler -----------------
-  Future<void> _onShowLUSteps() async {
-    if (rows != cols) {
-      _showSnack('Untuk LU, matriks A harus persegi (rows == cols).');
-      return;
-    }
+Widget _buildSettingsDrawer() {
+    return FutureBuilder(
+      future: _fetchUserProfile(),
+      builder: (context, snapshot) {
+        
+        String displayName = 'Pengguna Baru';
+        String displaySub = 'Ketuk untuk isi nama';
 
-    final aug = _readAugmentedMatrix();
+        if (snapshot.hasData && snapshot.data != null) {
+          final data = snapshot.data as Map<String, dynamic>;
+          displayName = data['full_name'] ?? 'Pengguna';
+          displaySub = data['university'] ?? 'Matrix Solver Pro';
+        }
 
-    // defensive check: ensure we have at least `cols` rows in aug
-    if (aug.length < cols) {
-      _showSnack('Matriks tidak sesuai ukuran.');
-      return;
-    }
-
-    List<List<double>> A = List.generate(cols, (i) => List.filled(cols, 0.0));
-    List<double> b = List.filled(cols, 0.0);
-    for (int i = 0; i < cols; i++) {
-      for (int j = 0; j < cols; j++) {
-        A[i][j] = aug[i][j];
-      }
-      b[i] = aug[i][cols];
-    }
-
-    final res = MatrixOps.luSolveToStringSteps(A, b);
-    final List<String> decompSteps = List<String>.from(res['decompositionSteps'] ?? []);
-    final List<String> forwardSteps = List<String>.from(res['forwardSteps'] ?? []);
-    final List<String> backwardSteps = List<String>.from(res['backwardSteps'] ?? []);
-    final List<double>? sol = (res['solution'] != null) ? List<double>.from(res['solution']) : null;
-
-    await showDialog(
-      context: context,
-      builder: (ctx) {
-        return DefaultTabController(
-          length: 4,
-          child: AlertDialog(
-            title: const Text('Langkah LU & Penyelesaian'),
-            content: SizedBox(
-              width: double.maxFinite,
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const TabBar(tabs: [
-                    Tab(text: 'Dekomposisi'),
-                    Tab(text: 'Forward'),
-                    Tab(text: 'Backward'),
-                    Tab(text: 'Solusi'),
-                  ]),
-                  SizedBox(
-                    height: 340,
-                    child: TabBarView(children: [
-                      _stepsListView(decompSteps),
-                      _stepsListView(forwardSteps),
-                      _stepsListView(backwardSteps),
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: sol == null
-                            ? const Text('Solusi tidak ditemukan atau matriks singular.')
-                            : SingleChildScrollView(
+        return Drawer(
+          width: MediaQuery.of(context).size.width * 0.85,
+          child: SingleChildScrollView(
+            child: Column(
+              children: [
+                // HEADER DRAWER
+                GestureDetector(
+                  onTap: () async {
+                    Navigator.pop(context); 
+                    await Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                    );
+                    setState(() {}); // Refresh setelah kembali
+                  },
+                  child: Container(
+                    height: 160,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          Theme.of(context).colorScheme.primary,
+                          Theme.of(context).colorScheme.secondary,
+                        ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                    ),
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: Column(
+                        mainAxisAlignment: MainAxisAlignment.end,
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              CircleAvatar(
+                                // ignore: deprecated_member_use
+                                backgroundColor: Colors.white.withOpacity(0.2),
+                                child: const Icon(Icons.person, color: Colors.white),
+                              ),
+                              const SizedBox(width: 12),
+                              Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
-                                    Text('Solusi (${sol.length} variabel):', style: const TextStyle(fontWeight: FontWeight.bold)),
-                                    const SizedBox(height: 8),
-                                    Wrap(
-                                      spacing: 12,
-                                      runSpacing: 8,
-                                      children: List.generate(sol.length, (i) {
-                                        return Tooltip(
-                                          message: sol[i].toString(),
-                                          child: Container(
-                                            padding: const EdgeInsets.all(8),
-                                            decoration: BoxDecoration(borderRadius: BorderRadius.circular(8), color: Colors.grey.shade100),
-                                            child: Text('x${i + 1} = ${sol[i].toStringAsFixed(precision)}'),
-                                          ),
-                                        );
-                                      }),
+                                    Text(
+                                      displayName, 
+                                      style: const TextStyle(
+                                        color: Colors.white,
+                                        fontSize: 18,
+                                        fontWeight: FontWeight.w700,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                    Text(
+                                      displaySub,
+                                      style: TextStyle(
+                                        // ignore: deprecated_member_use
+                                        // ignore: deprecated_member_use
+                                        color: Colors.white.withOpacity(0.9),
+                                        fontSize: 12,
+                                      ),
+                                      maxLines: 1,
+                                      overflow: TextOverflow.ellipsis,
                                     ),
                                   ],
                                 ),
                               ),
+                              const Icon(Icons.edit, color: Colors.white70, size: 16),
+                            ],
+                          ),
+                        ],
                       ),
-                    ]),
-                  )
+                    ),
+                  ),
+                ),
+
+                // MENU LAINNYA
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  child: Column(
+                    children: [
+                      const Text('DISPLAY SETTINGS', style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
+                      const SizedBox(height: 12),
+                      
+                      // Slider Precision
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(children: [
+                                Icon(Icons.precision_manufacturing, size: 20, color: Theme.of(context).primaryColor), 
+                                SizedBox(width: 8), 
+                                Text('Decimal Precision', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
+                              ]),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Slider(
+                                      value: precision.toDouble(), 
+                                      min: 0, 
+                                      max: 10, 
+                                      divisions: 10, 
+                                      onChanged: (val) => setState(() => precision = val.toInt())
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      // ignore: deprecated_member_use
+                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      '$precision',
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Slider Scale
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(children: [
+                                Icon(Icons.text_fields, size: 20, color: Theme.of(context).primaryColor), 
+                                SizedBox(width: 8), 
+                                Text('Display Scale', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
+                              ]),
+                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: Slider(
+                                      value: _displayScale, 
+                                      min: 0.8, 
+                                      max: 1.2, 
+                                      divisions: 4, 
+                                      onChanged: (val) => setState(() => _displayScale = val)
+                                    ),
+                                  ),
+                                  SizedBox(width: 12),
+                                  Container(
+                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      // ignore: deprecated_member_use
+                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
+                                      borderRadius: BorderRadius.circular(6),
+                                    ),
+                                    child: Text(
+                                      _getDisplayScaleLabel(),
+                                      style: TextStyle(
+                                        fontWeight: FontWeight.w700,
+                                        color: Theme.of(context).primaryColor,
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
+                      // Help
+                      Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        child: ListTile(
+                          leading: Icon(Icons.help_outline, color: Theme.of(context).primaryColor),
+                          title: const Text('Help & Tutorial'),
+                          onTap: () => _showHelpDialog(),
+                        ),
+                      ),
+                      SizedBox(height: 20),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMatrixInputCard() {
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Card(
+        elevation: 4,
+        margin: EdgeInsets.all(_cardMargin),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    Theme.of(context).colorScheme.primary,
+                    Theme.of(context).colorScheme.secondary,
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      // ignore: deprecated_member_use
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.grid_on, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  const Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'INPUT MATRIX',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        SizedBox(height: 2),
+                        Text(
+                          'Enter matrix A and vector b for Ax = b',
+                          style: TextStyle(
+                            color: Colors.white70,
+                            fontSize: 11,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (solution.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        // ignore: deprecated_member_use
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        '${solution.length} variables',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
-            actions: [
-              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close'))
-            ],
-          ),
-        );
-      },
-    );
-  }
-
-  Widget _stepsListView(List<String> steps) {
-    if (steps.isEmpty) return const Text('Tidak ada langkah tersedia.');
-    return ListView.separated(
-      padding: const EdgeInsets.all(8),
-      itemBuilder: (context, index) {
-        final s = steps[index];
-        return Card(
-          elevation: 0,
-          color: Colors.white,
-          child: Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: SelectableText(s),
-          ),
-        );
-      },
-      separatorBuilder: (_, __) => const SizedBox(height: 6),
-      itemCount: steps.length,
-    );
-  }
-
-  void _showSnack(String text) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(text)));
-  }
-
-  // ----------------- UI Build -----------------
-  Widget _buildMatrixInputCard() {
-    return Card(
-      margin: const EdgeInsets.all(12),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            Expanded(child: Text('Input Matriks Diperluas ([A | B]):', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.w600))),
-            const SizedBox(width: 8),
-            Row(children: [
-              const Text('Baris:'),
-              IconButton(onPressed: rows > minDim ? () => _resize(rows - 1, cols) : null, icon: const Icon(Icons.remove_circle_outline)),
-              Text('$rows'),
-              IconButton(onPressed: rows < maxDim ? () => _resize(rows + 1, cols) : null, icon: const Icon(Icons.add_circle_outline)),
-              const SizedBox(width: 12),
-              const Text('Kolom:'),
-              IconButton(onPressed: cols > minDim ? () => _resize(rows, cols - 1) : null, icon: const Icon(Icons.remove_circle_outline)),
-              Text('$cols'),
-              IconButton(onPressed: cols < maxDim ? () => _resize(rows, cols + 1) : null, icon: const Icon(Icons.add_circle_outline)),
-            ])
-          ]),
-          const SizedBox(height: 12),
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            child: Column(
-              children: List.generate(rows, (i) {
-                return Row(
-                  children: List.generate(cols + 1, (j) {
-                    return Container(
-                      width: j == cols ? 88 : 72,
-                      margin: const EdgeInsets.all(6),
-                      child: TextFormField(
-                        controller: controllers[i][j],
-                        decoration: InputDecoration(
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
-                          contentPadding: const EdgeInsets.symmetric(horizontal: 8, vertical: 10),
-                          isDense: true,
+            
+            // Body
+            Padding(
+              padding: const EdgeInsets.all(16),
+              child: Column(
+                children: [
+                  // Dimension Controls
+                  _buildDimensionControls(),
+                  const SizedBox(height: 16),
+                  
+                  // Matrix Grid
+                  SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: _buildMatrixGrid(),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Status Bar
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      vertical: 10,
+                      horizontal: 12,
+                    ),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFFF9FAFB),
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: const Color(0xFFE5E7EB)),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(
+                          _getStatusIcon(),
+                          color: _getStatusColor(),
+                          size: 14,
                         ),
-                        keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
-                        inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'[-0-9.,/]+'))],
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            operationStatus,
+                            style: TextStyle(
+                              color: _getStatusColor(),
+                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                            ),
+                            maxLines: 2,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  
+                  // Action Buttons
+                  _buildActionButtons(),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 1. WADAH UTAMA (Card)
+  Widget _buildDimensionControls() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Padding(
+        // Kurangi padding horizontal card sedikit agar ruang untuk tombol lebih luas
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        child: Column(
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: const [
+                Icon(Icons.aspect_ratio, size: 18, color: Color(0xFF6B7280)),
+                SizedBox(width: 6),
+                Text(
+                  'MATRIX DIMENSIONS',
+                  style: TextStyle(
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                    color: Color(0xFF6B7280),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            // Bagian Row Pengatur
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Pastikan terbagi rata
+              children: [
+                // KONTROL ROWS (KIRI)
+                Expanded(
+                  child: _buildDimensionControl(
+                    label: 'ROWS',
+                    value: rows,
+                    onDecrease: rows > minDim ? () => _resize(rows - 1, cols) : null,
+                    onIncrease: rows < maxDim ? () => _resize(rows + 1, cols) : null,
+                  ),
+                ),
+                
+                // GARIS PEMISAH TENGAH
+                Container(
+                  width: 1,
+                  height: 32, // Tinggi garis disesuaikan
+                  color: const Color(0xFFE5E7EB),
+                ),
+
+                // KONTROL COLUMNS (KANAN)
+                Expanded(
+                  child: _buildDimensionControl(
+                    label: 'COLUMNS',
+                    value: cols,
+                    onDecrease: cols > minDim ? () => _resize(rows, cols - 1) : null,
+                    onIncrease: cols < maxDim ? () => _resize(rows, cols + 1) : null,
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // 2. ITEM KONTROL (Tombol - Angka - Tombol)
+  Widget _buildDimensionControl({
+    required String label,
+    required int value,
+    VoidCallback? onDecrease,
+    VoidCallback? onIncrease,
+  }) {
+    return Column(
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 10,
+            fontWeight: FontWeight.w600,
+            color: Color(0xFF6B7280),
+          ),
+        ),
+        const SizedBox(height: 8),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center, // KUNCI: Rata Tengah
+          mainAxisSize: MainAxisSize.min,            // Agar tidak melebar sembarangan
+          children: [
+            _buildControlButton(
+              icon: Icons.remove,
+              onPressed: onDecrease,
+              isEnabled: onDecrease != null,
+            ),
+            
+            // KOTAK ANGKA (Diperbaiki ukurannya agar tidak mendorong tombol keluar)
+            Container(
+              width: 36, // Lebar pas (tidak terlalu lebar)
+              padding: const EdgeInsets.symmetric(vertical: 8),
+              margin: const EdgeInsets.symmetric(horizontal: 6), // Jarak diperkecil (sebelumnya 10)
+              decoration: BoxDecoration(
+                color: const Color(0xFFF3F4F6),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '$value',
+                textAlign: TextAlign.center,
+                style: const TextStyle(
+                  fontSize: 16, // Font sedikit disesuaikan
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ),
+            
+            _buildControlButton(
+              icon: Icons.add,
+              onPressed: onIncrease,
+              isEnabled: onIncrease != null,
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // 3. TOMBOL (+ dan -)
+  Widget _buildControlButton({
+    required IconData icon,
+    required VoidCallback? onPressed,
+    required bool isEnabled,
+  }) {
+    return Material(
+      borderRadius: BorderRadius.circular(10),
+      color: isEnabled
+          ? Theme.of(context).colorScheme.primary
+          : const Color(0xFFE5E7EB),
+      child: InkWell(
+        borderRadius: BorderRadius.circular(10),
+        onTap: onPressed,
+        // Ukuran tombol 40x40 (Nyaman disentuh, tapi muat di layar)
+        child: Container(
+          width: 40,  
+          height: 40,
+          alignment: Alignment.center, // Pastikan ikon di tengah tombol
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(
+            icon,
+            size: 20,
+            color: isEnabled ? Colors.white : const Color(0xFF9CA3AF),
+          ),
+        ),
+      ),
+    );
+  }
+
+
+  Widget _buildMatrixGrid() {
+    final cellWidth = MediaQuery.of(context).size.width / (cols + 3) - 10;
+    // ignore: unused_local_variable
+    final cellHeight = 45.0;
+
+    return Container(
+      decoration: BoxDecoration(
+        border: Border.all(color: const Color(0xFFE5E7EB)),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Column(
+        children: [
+          // Header yang lebih kompak
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
+            decoration: BoxDecoration(
+              color: const Color(0xFFF9FAFB),
+              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  const SizedBox(width: 40),
+                  ...List.generate(cols, (j) => SizedBox(
+                    width: cellWidth,
+                    child: Center(
+                      child: Text(
+                        'x${j+1}',
+                        style: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                          fontSize: 11,
+                        ),
                       ),
-                    );
-                  }),
-                );
-              }),
+                    ),
+                  )),
+                  SizedBox(
+                    width: cellWidth,
+                    child: Center(
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Icon(Icons.arrow_right_alt, 
+                              size: 12, color: Colors.red.shade600),
+                          const SizedBox(width: 2),
+                          Text(
+                            'b',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w800,
+                              color: Colors.red.shade600,
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
           ),
-          const SizedBox(height: 12),
-          Row(children: [
-            ElevatedButton.icon(onPressed: _onCalculate, icon: const Icon(Icons.calculate), label: const Text('HITUNG'), style: ElevatedButton.styleFrom(backgroundColor: Colors.deepPurple)),
-            const SizedBox(width: 12),
-            OutlinedButton.icon(onPressed: _clearAll, icon: const Icon(Icons.refresh), label: const Text('Reset')),
-          ])
-        ]),
+
+          // Rows dengan input yang lebih besar untuk touch
+          ...List.generate(rows, (i) => Container(
+            padding: const EdgeInsets.symmetric(vertical: 4),
+            decoration: BoxDecoration(
+              color: i % 2 == 0 ? Colors.white : const Color(0xFFFCFCFC),
+              border: i < rows - 1
+                ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
+                : null,
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 40,
+                    child: Center(
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 4,
+                          vertical: 2,
+                        ),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF3F4F6),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          'R${i+1}',
+                          style: const TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: Color(0xFF6B7280),
+                            fontSize: 9,
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  ...List.generate(cols, (j) => Container(
+                    width: cellWidth,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: TextField(
+                      controller: controllers[i][j],
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w500,
+                      ),
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(
+                            color: Theme.of(context).colorScheme.primary,
+                            width: 1.5,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.white,
+                        isDense: true,
+                      ),
+                      keyboardType: const TextInputType.numberWithOptions(
+                        decimal: true,
+                        signed: true,
+                      ),
+                      inputFormatters: [
+                        FilteringTextInputFormatter.allow(
+                          RegExp(r'[-0-9.,/]+'),
+                        ),
+                      ],
+                    ),
+                  )),
+                  Container(
+                    width: cellWidth,
+                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    child: TextField(
+                      controller: controllers[i][cols],
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 13,
+                        fontWeight: FontWeight.w700,
+                        color: Colors.red.shade600,
+                      ),
+                      decoration: InputDecoration(
+                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Colors.red.shade300),
+                        ),
+                        enabledBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(color: Colors.red.shade300),
+                        ),
+                        focusedBorder: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                          borderSide: BorderSide(
+                            color: Colors.red.shade600,
+                            width: 1.5,
+                          ),
+                        ),
+                        filled: true,
+                        fillColor: Colors.red.shade50,
+                        isDense: true,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildActionButtons() {
+    return Column(
+      children: [
+        // Primary button full width
+        SizedBox(
+          width: double.infinity,
+          child: _buildPrimaryButton(),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          children: [
+            Expanded(
+              child: _buildSecondaryButton(),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPrimaryButton() {
+    return ElevatedButton(
+      onPressed: isCalculating ? null : _onCalculateSPL,
+      style: ElevatedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
+        minimumSize: Size(double.infinity, _buttonHeight),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: isCalculating
+            ? [
+                SizedBox(
+                  width: 16,
+                  height: 16,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation(Colors.white),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                const Text(
+                  'SOLVING...',
+                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+              ]
+            : [
+                Icon(Icons.calculate, size: 18),
+                const SizedBox(width: 8),
+                const Text(
+                  'SOLVE SYSTEM',
+                  style: TextStyle(
+                    fontWeight: FontWeight.w700,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+      ),
+    );
+  }
+
+  Widget _buildSecondaryButton() {
+    return OutlinedButton(
+      onPressed: _clearAll,
+      style: OutlinedButton.styleFrom(
+        padding: const EdgeInsets.symmetric(vertical: 14),
+        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
+        minimumSize: Size(0, _buttonHeight),
+      ),
+      child: const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.clear, size: 16),
+          SizedBox(width: 6),
+          Text(
+            'CLEAR',
+            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+          ),
+        ],
       ),
     );
   }
 
   Widget _buildSolutionCard() {
-    return Card(
-      margin: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Row(children: [
-            const Icon(Icons.layers_outlined, color: Colors.deepPurple),
-            const SizedBox(width: 8),
-            Text('Solusi Langkah-demi-Langkah', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: Colors.deepPurple, fontWeight: FontWeight.w700)),
-          ]),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.deepPurple.shade50, borderRadius: BorderRadius.circular(8)),
-            child: _buildSolutionPreview(),
-          ),
-          const SizedBox(height: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Detail Operasi Baris Elementer (OBE)', style: TextStyle(fontWeight: FontWeight.w600)),
-              const SizedBox(height: 8),
-              Wrap(
-                spacing: 8.0,
-                runSpacing: 4.0,
-                children: <Widget>[
-                  ElevatedButton.icon(onPressed: obeSnapshots.isNotEmpty ? () => _showOBEViewer(0) : null, icon: const Icon(Icons.playlist_play), label: const Text('Lihat Langkah')),
-                  ElevatedButton.icon(onPressed: rows == cols ? _onShowLUSteps : null, icon: const Icon(Icons.account_tree_outlined), label: const Text('Tampilkan Langkah LU')),
-                  ElevatedButton.icon(onPressed: solution.isNotEmpty ? _copySolutionCSV : null, icon: const Icon(Icons.copy), label: const Text('Copy Hasil')),
+    if (solution.isEmpty && lastOperationLabel.isEmpty) return const SizedBox();
+
+    return FadeTransition(
+      opacity: _fadeAnimation,
+      child: Card(
+        elevation: 4,
+        margin: EdgeInsets.symmetric(horizontal: _cardMargin, vertical: 8),
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+        ),
+        child: Column(
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(16),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF11998e),
+                    const Color(0xFF38ef7d),
                 ],
-              )
-            ]
-          ),
-          const SizedBox(height: 8),
-          _buildRREFPreview(),
-          const SizedBox(height: 12),
-          ElevatedButton.icon(onPressed: _clearAll, icon: const Icon(Icons.refresh), label: const Text('Kalkulasi Matriks Baru'), style: ElevatedButton.styleFrom(backgroundColor: Colors.redAccent)),
-        ]),
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(16),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      // ignore: deprecated_member_use
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                    ),
+                    child: const Icon(Icons.analytics, color: Colors.white, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Text(
+                          'SOLUTIONS',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 14,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                        const SizedBox(height: 2),
+                        Text(
+                          lastOperationLabel,
+                          style: TextStyle(
+                            // ignore: deprecated_member_use
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: 12,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                  if (solution.isNotEmpty)
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 10,
+                        vertical: 4,
+                      ),
+                      decoration: BoxDecoration(
+                        // ignore: deprecated_member_use
+                        // ignore: deprecated_member_use
+                        color: Colors.white.withOpacity(0.2),
+                        borderRadius: BorderRadius.circular(16),
+                      ),
+                      child: Text(
+                        lastOperationLabel,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                ],
+              ),
+            ),
+
+            // Tabs Content
+            DefaultTabController(
+              length: 3,
+              child: Column(
+                children: [
+                  SizedBox(
+                    height: 40,
+                    child: TabBar(
+                      labelColor: const Color(0xFF11998e),
+                      unselectedLabelColor: const Color(0xFF6B7280),
+                      indicatorColor: const Color(0xFF11998e),
+                      indicatorSize: TabBarIndicatorSize.tab,
+                      indicatorWeight: 3,
+                      labelStyle: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 11,
+                      ),
+                      unselectedLabelStyle: const TextStyle(
+                        fontWeight: FontWeight.w500,
+                        fontSize: 11,
+                      ),
+                      tabs: const [
+                        Tab(text: 'SOLUTION'),
+                        Tab(text: 'OPERATIONS'),
+                        Tab(text: 'ADVANCED'),
+                      ],
+                    ),
+                  ),
+                  SizedBox(
+                    height: 300,
+                    child: TabBarView(
+                      children: [
+                        // Tab 1: Solution
+                        _buildSolutionTab(),
+                        
+                        // Tab 2: Operations
+                        _buildOperationsTab(),
+                        
+                        // Tab 3: Advanced
+                        _buildAdvancedTab(),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildSolutionPreview() {
-    if (solution.isEmpty) {
-      return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-        const Text('Hasil Akhir (Presisi):', style: TextStyle(fontWeight: FontWeight.w600)),
-        const SizedBox(height: 8),
-        Wrap(spacing: 12, children: List.generate(cols, (i) {
-          return Container(
-            width: 80,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]),
-            child: Column(children: [
-              Text('x${i + 1}', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.deepPurple)),
-              const SizedBox(height: 6),
-              Text('0.00', style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.green)),
-            ]),
-          );
-        }))
-      ]);
-    }
-
-    return Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-      const Text('Hasil Akhir (Presisi):', style: TextStyle(fontWeight: FontWeight.w600)),
-      const SizedBox(height: 8),
-      Wrap(spacing: 12, children: List.generate(solution.length, (i) {
-        return Tooltip(
-          message: solution[i].toString(),
-          child: Container(
-            width: 100,
-            padding: const EdgeInsets.all(12),
-            decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(8), boxShadow: [BoxShadow(color: Colors.black12, blurRadius: 4)]),
-            child: Column(children: [
-              Text('x${i + 1}', style: const TextStyle(fontWeight: FontWeight.w600, color: Colors.deepPurple)),
-              const SizedBox(height: 6),
-              SelectableText(solution[i].toStringAsFixed(precision), style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w700, color: Colors.green)),
-            ]),
+  Widget _buildSolutionTab() {
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'SYSTEM SOLUTION',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+            ),
           ),
-        );
-      }))
-    ]);
-  }
-
-  Widget _buildRREFPreview() {
-    final aug = _readAugmentedMatrix();
-    return Card(
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-      child: Padding(
-        padding: const EdgeInsets.all(12),
-        child: SingleChildScrollView(
-          scrollDirection: Axis.horizontal,
-          child: Column(
-            children: [
-              for (int i = 0; i < aug.length; i++)
+          const SizedBox(height: 12),
+          
+          if (solution.isEmpty)
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: const Color(0xFFF9FAFB),
+                borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: const Color(0xFFE5E7EB)),
+              ),
+              child: Column(
+                children: [
+                  Icon(
+                    Icons.auto_awesome_mosaic,
+                    size: 48,
+                    color: Colors.grey.shade400,
+                  ),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'No Solution Calculated',
+                    style: TextStyle(
+                      fontSize: 14,
+                      fontWeight: FontWeight.w600,
+                      color: Color(0xFF6B7280),
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    'Click "Solve System" to find solution for Ax = b',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(
+                      color: Colors.grey.shade500,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          else
+            Column(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFE3F2FD),
+                        const Color(0xFFF3E5F5),
+                    ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: Column(
+                    children: [
+                      const Text(
+                        'Solution Vector x:',
+                        style: TextStyle(
+                          fontSize: 13,
+                          fontWeight: FontWeight.w700,
+                          color: Color(0xFF374151),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      Wrap(
+                        spacing: 8,
+                        runSpacing: 8,
+                        alignment: WrapAlignment.center,
+                        children: List.generate(solution.length, (i) {
+                          return Container(
+                            width: 70,
+                            padding: const EdgeInsets.all(10),
+                            decoration: BoxDecoration(
+                              color: Colors.white,
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  // ignore: deprecated_member_use
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 4,
+                                  offset: const Offset(0, 2),
+                                ),
+                              ],
+                            ),
+                            child: Column(
+                              children: [
+                                Text(
+                                  'x${i + 1}',
+                                  style: TextStyle(
+                                    fontWeight: FontWeight.w800,
+                                    color: Theme.of(context).colorScheme.primary,
+                                    fontSize: 11,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  solution[i].toStringAsFixed(precision),
+                                  style: const TextStyle(
+                                    fontSize: 14,
+                                    fontWeight: FontWeight.w800,
+                                    color: Color(0xFF1F2937),
+                                    fontFamily: 'Monospace',
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Action Buttons
                 Row(
                   children: [
-                    for (int j = 0; j < aug[0].length; j++)
-                      Container(
-                        width: j == cols ? 84 : 64,
-                        padding: const EdgeInsets.all(6),
-                        margin: const EdgeInsets.all(4),
-                        decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(6), color: j == cols ? Colors.blue.shade50 : Colors.white),
-                        child: Tooltip(message: aug[i][j].toString(), child: Text(aug[i][j].toStringAsFixed(precision), textAlign: TextAlign.center)),
-                      )
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: _copySolutionCSV,
+                        icon: const Icon(Icons.copy, size: 16),
+                        label: const Text('Copy Values', style: TextStyle(fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: OutlinedButton.icon(
+                        onPressed: () => _showOBEViewer(0),
+                        icon: const Icon(Icons.visibility, size: 16),
+                        label: const Text('View Steps', style: TextStyle(fontSize: 13)),
+                        style: OutlinedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
                   ],
-                )
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOperationsTab() {
+    final bool isSquare = rows == cols;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'MATRIX OPERATIONS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            isSquare ? 'Square Matrix ($rows × $rows)' : 'Non-square Matrix',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Matrix Operations Grid
+          GridView.count(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            crossAxisCount: 2,
+            mainAxisSpacing: 10,
+            crossAxisSpacing: 10,
+            childAspectRatio: 1.4,
+            padding: const EdgeInsets.symmetric(horizontal: 4),
+            children: [
+              _buildOperationCard(
+                title: 'Determinant',
+                icon: Icons.functions,
+                color: const Color(0xFF10B981),
+                enabled: isSquare,
+                onTap: _onCalculateDet,
+                description: 'det(A)',
+              ),
+              _buildOperationCard(
+                title: 'Inverse',
+                icon: Icons.swap_horiz,
+                color: const Color(0xFF8B5CF6),
+                enabled: isSquare,
+                onTap: _onCalculateInverse,
+                description: 'A⁻¹',
+              ),
+              _buildOperationCard(
+                title: 'Transpose',
+                icon: Icons.swap_vert,
+                color: const Color(0xFFF59E0B),
+                enabled: true,
+                onTap: _onCalculateTranspose,
+                description: 'Aᵀ',
+              ),
+              _buildOperationCard(
+                title: 'Rank',
+                icon: Icons.stacked_line_chart,
+                color: const Color(0xFFEF4444),
+                enabled: true,
+                onTap: _onCalculateRank,
+                description: 'rank(A)',
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 12),
+          
+          // RREF Preview
+          const Text(
+            'RREF PREVIEW',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Container(
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            padding: const EdgeInsets.all(10),
+            child: _buildRREFPreview(),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdvancedTab() {
+    final bool isSquare = rows == cols;
+    
+    return SingleChildScrollView(
+      padding: const EdgeInsets.all(16),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'ADVANCED METHODS',
+            style: TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 2),
+          Text(
+            'Numerical methods for system solving',
+            style: TextStyle(
+              fontSize: 11,
+              color: Colors.grey.shade600,
+            ),
+          ),
+          const SizedBox(height: 16),
+          
+          // Method Cards
+          Column(
+            children: [
+              _buildMethodCard(
+                title: 'LU Decomposition',
+                icon: Icons.account_tree,
+                color: const Color(0xFFEC4899),
+                enabled: isSquare,
+                onTap: _onShowLUSteps,
+                description: 'A = LU decomposition with pivot steps',
+              ),
+              const SizedBox(height: 12),
+              _buildMethodCard(
+                title: 'Gaussian Elimination',
+                icon: Icons.linear_scale,
+                color: const Color(0xFF3B82F6),
+                enabled: true,
+                onTap: () => _showOBEViewer(0),
+                description: 'Step-by-step elimination process',
+              ),
+              const SizedBox(height: 12),
+              _buildMethodCard(
+                title: 'Matrix Multiplication',
+                icon: Icons.close,
+                color: const Color(0xFFF59E0B),
+                enabled: true,
+                onTap: _onMatrixMultiply,
+                description: 'Multiply current matrix with another',
+              ),
+            ],
+          ),
+          
+          const SizedBox(height: 20),
+          const Divider(),
+          const SizedBox(height: 12),
+          
+          // Matrix Properties
+          const Text(
+            'MATRIX PROPERTIES',
+            style: TextStyle(
+              fontSize: 11,
+              fontWeight: FontWeight.w700,
+              color: Color(0xFF6B7280),
+            ),
+          ),
+          const SizedBox(height: 8),
+          Card(
+            elevation: 2,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Padding(
+              padding: const EdgeInsets.all(12),
+              child: Column(
+                children: [
+                  _buildPropertyRow('Dimensions', '$rows × $cols'),
+                  const Divider(),
+                  _buildPropertyRow('Type', isSquare ? 'Square' : 'Rectangular'),
+                  const Divider(),
+                  _buildPropertyRow('Variables', '$cols variables'),
+                  const Divider(),
+                  _buildPropertyRow('Equations', '$rows equations'),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildOperationCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required bool enabled,
+    required VoidCallback onTap,
+    required String description,
+  }) {
+    return Material(
+      borderRadius: BorderRadius.circular(12),
+      color: Colors.white,
+      elevation: 1,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: enabled ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(
+              // ignore: deprecated_member_use
+              color: enabled ? color.withOpacity(0.3) : Colors.grey.shade200,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
+                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(
+                  icon,
+                  color: enabled ? color : Colors.grey.shade400,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                title,
+                style: TextStyle(
+                  fontWeight: FontWeight.w700,
+                  color: enabled ? color : Colors.grey.shade400,
+                  fontSize: 12,
+                ),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  fontSize: 10,
+                  color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
+                ),
+              ),
             ],
           ),
         ),
@@ -528,75 +1868,1053 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen> {
     );
   }
 
-  void _showOBEViewer(int startIndex) {
-    if (obeSnapshots.isEmpty) return;
-    int idx = startIndex;
-    showDialog(
-      context: context,
-      builder: (ctx) {
-        return StatefulBuilder(builder: (ctx2, setInner) {
-          final snap = obeSnapshots[idx];
-          final desc = obeDescriptions[idx];
-          return AlertDialog(
-            title: Text('Langkah ${idx + 1}/${obeSnapshots.length}'),
-            content: SingleChildScrollView(
-              child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-                Text(desc, style: const TextStyle(fontWeight: FontWeight.w600)),
-                const SizedBox(height: 8),
-                SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Column(
-                    children: List.generate(snap.length, (i) {
-                      return Row(
-                        children: List.generate(snap[i].length, (j) {
-                          return Container(
-                            width: j == cols ? 84 : 64,
-                            padding: const EdgeInsets.all(6),
-                            margin: const EdgeInsets.all(4),
-                            decoration: BoxDecoration(border: Border.all(color: Colors.black12), borderRadius: BorderRadius.circular(6), color: j == cols ? Colors.blue.shade50 : Colors.white),
-                            child: Tooltip(message: snap[i][j].toString(), child: Text(snap[i][j].toStringAsFixed(precision), textAlign: TextAlign.center)),
-                          );
-                        }),
-                      );
-                    }),
+  Widget _buildMethodCard({
+    required String title,
+    required IconData icon,
+    required Color color,
+    required bool enabled,
+    required VoidCallback onTap,
+    required String description,
+  }) {
+    return Material(
+      borderRadius: BorderRadius.circular(12),
+      color: Colors.white,
+      elevation: 1,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: enabled ? onTap : null,
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            border: Border.all(
+              // ignore: deprecated_member_use
+              color: enabled ? color.withOpacity(0.2) : Colors.grey.shade200,
+            ),
+            borderRadius: BorderRadius.circular(12),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(10),
+                decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
+                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(
+                  icon,
+                  color: enabled ? color : Colors.grey.shade400,
+                  size: 20,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: enabled ? color : Colors.grey.shade400,
+                        fontSize: 14,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      description,
+                      style: TextStyle(
+                        fontSize: 11,
+                        color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Icon(
+                Icons.chevron_right,
+                color: enabled ? color : Colors.grey.shade400,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildPropertyRow(String label, String value) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: const TextStyle(
+            color: Color(0xFF6B7280),
+            fontWeight: FontWeight.w500,
+            fontSize: 12,
+          ),
+        ),
+        Text(
+          value,
+          style: const TextStyle(
+            color: Color(0xFF111827),
+            fontWeight: FontWeight.w700,
+            fontSize: 12,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildRREFPreview() {
+    final aug = _readAugmentedMatrix();
+    if (aug.isEmpty) return const SizedBox();
+    
+    final cellWidth = 55.0;
+    
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Column(
+        children: [
+          for (int i = 0; i < aug.length; i++)
+            Row(
+              children: [
+                Container(
+                  width: 35,
+                  padding: const EdgeInsets.symmetric(vertical: 6),
+                  child: Text(
+                    'R${i+1}',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF6B7280),
+                      fontSize: 10,
+                    ),
                   ),
                 ),
-              ]),
+                ...List.generate(aug[i].length, (j) {
+                  final isLast = j == aug[i].length - 1;
+                  return Container(
+                    width: cellWidth,
+                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+                    decoration: BoxDecoration(
+                      color: isLast ? Colors.red.shade50 : Colors.white,
+                      border: Border.all(
+                        color: isLast ? Colors.red.shade100 : const Color(0xFFE5E7EB),
+                      ),
+                    ),
+                    child: Text(
+                      aug[i][j].toStringAsFixed(precision),
+                      textAlign: TextAlign.center,
+                      style: TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
+                        color: isLast ? Colors.red.shade700 : const Color(0xFF374151),
+                        fontFamily: 'Monospace',
+                      ),
+                    ),
+                  );
+                }),
+              ],
             ),
-            actions: [
-              TextButton(onPressed: idx > 0 ? () => setInner(() => idx--) : null, child: const Text('Prev')),
-              TextButton(onPressed: idx < obeSnapshots.length - 1 ? () => setInner(() => idx++) : null, child: const Text('Next')),
-              TextButton(onPressed: () => Navigator.of(ctx).pop(), child: const Text('Close')),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInfoChip({
+    required IconData icon,
+    required String label,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      decoration: BoxDecoration(
+        // ignore: deprecated_member_use
+        color: color.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(12),
+        // ignore: deprecated_member_use
+        border: Border.all(color: color.withOpacity(0.3)),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Icon(icon, size: 10, color: color),
+          const SizedBox(width: 3),
+          Text(
+            label,
+            style: TextStyle(
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              color: color,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // --- HELPER METHODS ---
+
+  void _showResultDialog({
+    required String title,
+    required IconData icon,
+    required Color iconColor,
+    required Widget content,
+  }) {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  // ignore: deprecated_member_use
+                  color: iconColor.withOpacity(0.1),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, size: 30, color: iconColor),
+              ),
+              const SizedBox(height: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 16),
+              content,
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  style: ElevatedButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  child: const Text(
+                    'CLOSE',
+                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                  ),
+                ),
+              ),
             ],
-          );
-        });
-      },
+          ),
+        ),
+      ),
+    );
+  }
+
+  Future<void> _showOBEViewer(int startIndex) async {
+    if (obeSnapshots.isEmpty) return;
+    
+    await showDialog(
+      context: context,
+      builder: (ctx) => _OBEViewerDialog(
+        snapshots: obeSnapshots,
+        descriptions: obeDescriptions,
+        precision: precision,
+        startIndex: startIndex,
+      ),
+    );
+  }
+
+  IconData _getStatusIcon() {
+    if (isCalculating) return Icons.hourglass_top;
+    if (solution.isEmpty) return Icons.info_outline;
+    if (lastOperationLabel.contains('Unique')) return Icons.check_circle;
+    if (lastOperationLabel.contains('Parametric')) return Icons.warning;
+    return Icons.info_outline;
+  }
+
+  Color _getStatusColor() {
+    if (isCalculating) return const Color(0xFFF59E0B);
+    if (solution.isEmpty) return const Color(0xFF6B7280);
+    if (lastOperationLabel.contains('Unique')) return const Color(0xFF10B981);
+    if (lastOperationLabel.contains('Parametric')) return const Color(0xFFF59E0B);
+    if (lastOperationLabel.contains('Inconsistent')) return const Color(0xFFEF4444);
+    return const Color(0xFF6B7280);
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.error_outline, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
+          ],
+        ),
+        backgroundColor: const Color(0xFFEF4444),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        duration: const Duration(seconds: 3),
+      ),
+    );
+  }
+
+  void _showSuccess(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Row(
+          children: [
+            const Icon(Icons.check_circle, color: Colors.white, size: 20),
+            const SizedBox(width: 10),
+            Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
+          ],
+        ),
+        backgroundColor: const Color(0xFF10B981),
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(10),
+        ),
+        duration: const Duration(seconds: 2),
+      ),
     );
   }
 
   void _copySolutionCSV() {
-    if (solution.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Tidak ada solusi untuk disalin')));
+    if (solution.isEmpty) return;
+    final csv = solution.map((v) => v.toStringAsFixed(precision)).join(', ');
+    Clipboard.setData(ClipboardData(text: csv));
+    _showSuccess('Solution copied to clipboard');
+  }
+
+  void _copyMatrixToClipboard(List<List<double>> matrix) {
+    final buffer = StringBuffer();
+    for (var row in matrix) {
+      buffer.writeln(row.map((v) => v.toStringAsFixed(precision)).join('\t'));
+    }
+    Clipboard.setData(ClipboardData(text: buffer.toString()));
+    _showSuccess('Matrix copied to clipboard');
+  }
+
+  void _onCalculateTranspose() {
+    final A = _readMatrixAOnly();
+    final transposed = MatrixOps.transpose(A);
+    
+    _showResultDialog(
+      title: 'Matrix Transpose',
+      icon: Icons.swap_vert,
+      iconColor: const Color(0xFFF59E0B),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'Aᵀ =',
+            style: TextStyle(
+              fontWeight: FontWeight.w700,
+              fontSize: 16,
+              color: Color(0xFF374151),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              border: Border.all(color: const Color(0xFFE5E7EB)),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              child: Column(
+                children: transposed.map((row) {
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: 8),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: row.map((val) {
+                        return Container(
+                          width: 60,
+                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          decoration: BoxDecoration(
+                            color: Colors.white,
+                            borderRadius: BorderRadius.circular(6),
+                            boxShadow: [
+                              BoxShadow(
+                                // ignore: deprecated_member_use
+                                color: Colors.black.withOpacity(0.05),
+                                blurRadius: 3,
+                                offset: const Offset(0, 2),
+                              ),
+                            ],
+                          ),
+                          child: Text(
+                            val.toStringAsFixed(precision),
+                            textAlign: TextAlign.center,
+                            style: const TextStyle(
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  );
+                }).toList(),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _onCalculateRank() {
+    final A = _readMatrixAOnly();
+    final rank = MatrixOps.rank(A);
+
+    _showResultDialog(
+      title: 'Matrix Rank',
+      icon: Icons.stacked_line_chart,
+      iconColor: const Color(0xFFEF4444),
+      content: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Text(
+            'rank(A) =',
+            style: TextStyle(
+              fontSize: 14,
+              color: Colors.grey,
+            ),
+          ),
+          const SizedBox(height: 12),
+          Text(
+            '$rank',
+            style: const TextStyle(
+              fontSize: 28,
+              fontWeight: FontWeight.w800,
+              color: Color(0xFF1F2937),
+            ),
+          ),
+          const SizedBox(height: 16),
+          Text(
+            rank == min(rows, cols) 
+                ? 'Matrix has full rank'
+                : 'Matrix is rank-deficient',
+            style: TextStyle(
+              color: rank == min(rows, cols) 
+                  ? const Color(0xFF10B981)
+                  : const Color(0xFFF59E0B),
+              fontWeight: FontWeight.w600,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<void> _onShowLUSteps() async {
+    if (rows != cols) {
+      _showError('LU decomposition requires square matrix');
       return;
     }
-    final csv = solution.map((v) => v.toStringAsFixed(precision)).join(',');
-    Clipboard.setData(ClipboardData(text: csv));
-    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Hasil disalin ke clipboard')));
+
+    setState(() => isCalculating = true);
+
+    try {
+      final aug = _readAugmentedMatrix();
+      if (aug.length < cols) {
+        _showError('Invalid matrix dimensions');
+        return;
+      }
+
+      List<List<double>> A = List.generate(cols, (i) => List.filled(cols, 0.0));
+      List<double> b = List.filled(cols, 0.0);
+      for (int i = 0; i < cols; i++) {
+        for (int j = 0; j < cols; j++) {
+          A[i][j] = aug[i][j];
+        }
+        b[i] = aug[i][cols];
+      }
+
+      final res = MatrixOps.luSolveToStringSteps(A, b);
+      final List<String> decompSteps = List<String>.from(res['decompositionSteps'] ?? []);
+      final List<String> forwardSteps = List<String>.from(res['forwardSteps'] ?? []);
+      final List<String> backwardSteps = List<String>.from(res['backwardSteps'] ?? []);
+      final List<double>? sol = (res['solution'] != null) 
+          ? List<double>.from(res['solution']) 
+          : null;
+
+      await showDialog(
+        context: context,
+        builder: (ctx) => Dialog(
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          child: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(16),
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        const Color(0xFFEC4899),
+                        const Color(0xFF8B5CF6),
+                      ],
+                      begin: Alignment.centerLeft,
+                      end: Alignment.centerRight,
+                    ),
+                    borderRadius: const BorderRadius.vertical(
+                      top: Radius.circular(20),
+                    ),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.account_tree, color: Colors.white, size: 24),
+                      const SizedBox(width: 12),
+                      const Expanded(
+                        child: Text(
+                          'LU DECOMPOSITION',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 16,
+                            fontWeight: FontWeight.w700,
+                          ),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: () => Navigator.pop(ctx),
+                        icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                      ),
+                    ],
+                  ),
+                ),
+                DefaultTabController(
+                  length: 4,
+                  child: Column(
+                    children: [
+                      SizedBox(
+                        height: 40,
+                        child: TabBar(
+                          labelColor: const Color(0xFFEC4899),
+                          unselectedLabelColor: const Color(0xFF6B7280),
+                          indicatorColor: const Color(0xFFEC4899),
+                          indicatorWeight: 3,
+                          labelStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                          unselectedLabelStyle: const TextStyle(
+                            fontSize: 11,
+                            fontWeight: FontWeight.w500,
+                          ),
+                          tabs: const [
+                            Tab(text: 'Decomposition'),
+                            Tab(text: 'Forward Sub'),
+                            Tab(text: 'Backward Sub'),
+                            Tab(text: 'Solution'),
+                          ],
+                        ),
+                      ),
+                      SizedBox(
+                        height: 300,
+                        child: TabBarView(
+                          children: [
+                            _buildStepsListView(decompSteps),
+                            _buildStepsListView(forwardSteps),
+                            _buildStepsListView(backwardSteps),
+                            _buildSolutionView(sol),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    } finally {
+      setState(() => isCalculating = false);
+    }
+  }
+
+  Widget _buildStepsListView(List<String> steps) {
+    return ListView.builder(
+      padding: const EdgeInsets.all(12),
+      itemCount: steps.length,
+      itemBuilder: (context, index) {
+        return Card(
+          elevation: 1,
+          margin: const EdgeInsets.only(bottom: 8),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: 22,
+                  height: 22,
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(11),
+                  ),
+                  child: Center(
+                    child: Text(
+                      '${index + 1}',
+                      style: const TextStyle(
+                        fontSize: 10,
+                        fontWeight: FontWeight.w700,
+                        color: Color(0xFF6B7280),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SelectableText(
+                    steps[index],
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: Color(0xFF374151),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildSolutionView(List<double>? sol) {
+    return Padding(
+      padding: const EdgeInsets.all(16),
+      child: sol == null
+          ? const Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.error_outline,
+                    size: 40,
+                    color: Colors.grey,
+                  ),
+                  SizedBox(height: 12),
+                  Text(
+                    'No solution found',
+                    style: TextStyle(
+                      color: Colors.grey,
+                      fontSize: 14,
+                    ),
+                  ),
+                ],
+              ),
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Solution:',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: Color(0xFF1F2937),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                Wrap(
+                  spacing: 12,
+                  runSpacing: 12,
+                  children: List.generate(sol.length, (i) {
+                    return Container(
+                      width: 100,
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            // ignore: deprecated_member_use
+                            const Color(0xFFEC4899).withOpacity(0.1),
+                            // ignore: deprecated_member_use
+                            const Color(0xFF8B5CF6).withOpacity(0.1),
+                          ],
+                        ),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            'x${i + 1}',
+                            style: TextStyle(
+                              fontWeight: FontWeight.w700,
+                              color: const Color(0xFFEC4899),
+                              fontSize: 12,
+                            ),
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            sol[i].toStringAsFixed(precision),
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.w800,
+                              color: Color(0xFF1F2937),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ),
+              ],
+            ),
+    );
+  }
+
+  void _onMatrixMultiply() {
+    _showInfo('Matrix multiplication feature coming soon!');
+  }
+
+  void _showInfo(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: const TextStyle(fontSize: 13)),
+        backgroundColor: const Color(0xFF3B82F6),
+        behavior: SnackBarBehavior.floating,
+        duration: const Duration(seconds: 2),
+      ),
+    );
+  }
+
+  void _showHelpDialog() {
+    showDialog(
+      context: context,
+      builder: (ctx) => Dialog(
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(20),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(20),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const Icon(
+                Icons.help_outline,
+                size: 50,
+                color: Color(0xFF6A11CB),
+              ),
+              const SizedBox(height: 16),
+              const Text(
+                'Matrix Solver Help',
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+              const SizedBox(height: 12),
+              const Text(
+                '1. Enter your matrix A and vector b\n'
+                '2. Adjust dimensions as needed\n'
+                '3. Click "Solve System" for solution\n'
+                '4. Use operations tab for matrix analysis\n'
+                '5. View step-by-step solutions',
+                style: TextStyle(
+                  fontSize: 12,
+                  color: Color(0xFF6B7280),
+                  height: 1.6,
+                ),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () => Navigator.pop(ctx),
+                  child: const Text('GOT IT', style: TextStyle(fontSize: 13)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  String _getDisplayScaleLabel() {
+    if (_displayScale < 0.9) return 'Small';
+    if (_displayScale < 1.1) return 'Medium';
+    return 'Large';
   }
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      key: _scaffoldKey,
-      appBar: _buildAppBar(),
-      body: SingleChildScrollView(
-        child: Column(children: [
-          const SizedBox(height: 12),
-          _buildMatrixInputCard(),
-          const SizedBox(height: 8),
-          _buildSolutionCard(),
-          const SizedBox(height: 24),
-        ]),
+    return MediaQuery(
+      data: MediaQuery.of(context).copyWith(
+        textScaler: TextScaler.linear(_displayScale),
+      ),
+      child: Scaffold(
+        key: _scaffoldKey,
+        appBar: _buildAppBar(),
+        endDrawer: _buildSettingsDrawer(),
+        backgroundColor: const Color(0xFFF8F9FA),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: EdgeInsets.symmetric(horizontal: _contentPadding),
+            child: Column(
+              children: [
+                const SizedBox(height: 8),
+                _buildMatrixInputCard(),
+                _buildSolutionCard(),
+                const SizedBox(height: 12),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF3F4F6),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Icon(
+                        Icons.code,
+                        size: 12,
+                        color: const Color(0xFF757575),
+                      ),
+                      const SizedBox(width: 6),
+                      Text(
+                        'Matrix Solver Pro • v1.0 • Precision: $precision',
+                        style: TextStyle(
+                          color: Colors.grey.shade600,
+                          fontSize: 10,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: 16),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+// OBE Viewer Dialog as separate widget
+class _OBEViewerDialog extends StatefulWidget {
+  final List<List<List<double>>> snapshots;
+  final List<String> descriptions;
+  final int precision;
+  final int startIndex;
+
+  const _OBEViewerDialog({
+    required this.snapshots,
+    required this.descriptions,
+    required this.precision,
+    required this.startIndex,
+  });
+
+  @override
+  __OBEViewerDialogState createState() => __OBEViewerDialogState();
+}
+
+class __OBEViewerDialogState extends State<_OBEViewerDialog> {
+  late int currentIndex;
+
+  @override
+  void initState() {
+    super.initState();
+    currentIndex = widget.startIndex;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final snapshot = widget.snapshots[currentIndex];
+    final description = widget.descriptions[currentIndex];
+    final totalSteps = widget.snapshots.length;
+
+    return Dialog(
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // Header
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFF3B82F6),
+                  const Color(0xFF1D4ED8),
+                ],
+              ),
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.format_list_numbered, color: Colors.white, size: 22),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text(
+                        'STEP-BY-STEP',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.w700,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        'Step ${currentIndex + 1} of $totalSteps',
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 11,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                ),
+              ],
+            ),
+          ),
+          
+          // Content
+          Padding(
+            padding: const EdgeInsets.all(16),
+            child: Column(
+              children: [
+                // Description
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFF0F9FF),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFFBAE6FD)),
+                  ),
+                  child: Text(
+                    description,
+                    style: const TextStyle(
+                      color: Color(0xFF0369A1),
+                      fontWeight: FontWeight.w600,
+                      fontSize: 12,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Matrix Display
+                Container(
+                  decoration: BoxDecoration(
+                    border: Border.all(color: const Color(0xFFE5E7EB)),
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: Column(
+                      children: snapshot.asMap().entries.map((entry) {
+                        final i = entry.key;
+                        final row = entry.value;
+                        return Padding(
+                          padding: EdgeInsets.only(bottom: i < snapshot.length - 1 ? 8 : 0),
+                          child: Row(
+                            children: row.asMap().entries.map((cell) {
+                              final isLast = cell.key == row.length - 1;
+                              return Container(
+                                width: 55,
+                                padding: const EdgeInsets.symmetric(vertical: 8),
+                                decoration: BoxDecoration(
+                                  color: isLast ? Colors.red.shade50 : Colors.white,
+                                  border: Border.all(
+                                    color: isLast 
+                                        ? Colors.red.shade200 
+                                        : const Color(0xFFE5E7EB),
+                                  ),
+                                ),
+                                child: Text(
+                                  cell.value.toStringAsFixed(widget.precision),
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: isLast 
+                                        ? Colors.red.shade700 
+                                        : const Color(0xFF1F2937),
+                                  ),
+                                ),
+                              );
+                            }).toList(),
+                          ),
+                        );
+                      }).toList(),
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 16),
+                
+                // Navigation
+                Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: currentIndex > 0
+                            ? () => setState(() => currentIndex--)
+                            : null,
+                        icon: const Icon(Icons.navigate_before, size: 18),
+                        label: const Text('Previous', style: TextStyle(fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        onPressed: currentIndex < totalSteps - 1
+                            ? () => setState(() => currentIndex++)
+                            : null,
+                        icon: const Icon(Icons.navigate_next, size: 18),
+                        label: const Text('Next', style: TextStyle(fontSize: 13)),
+                        style: ElevatedButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          backgroundColor: const Color(0xFF10B981),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
