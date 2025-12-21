@@ -209,6 +209,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         child: Icon(
                           Icons.person,
                           size: 50,
+                          // ignore: deprecated_member_use
                           color: Colors.white.withOpacity(0.8),
                         ),
                       ),
@@ -267,6 +268,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFF0F4FF),
                   borderRadius: BorderRadius.circular(12),
+                  // ignore: deprecated_member_use
                   border: Border.all(color: const Color(0xFF6A11CB).withOpacity(0.2)),
                 ),
                 child: Row(
@@ -296,6 +298,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFFFFF8E1),
                   borderRadius: BorderRadius.circular(12),
+                  // ignore: deprecated_member_use
                   border: Border.all(color: Colors.orange.withOpacity(0.2)),
                 ),
                 child: const Row(
