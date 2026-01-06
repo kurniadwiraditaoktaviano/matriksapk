@@ -1,13 +1,10 @@
-// ignore: file_names
-// ignore: file_names
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'dart:math';
 import 'MatrixUtils.dart';
 import 'ProfileScreen.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
-// ignore: unused_import
 import 'DeviceIdHelper.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MatrixCalculatorScreen extends StatefulWidget {
   const MatrixCalculatorScreen({super.key});
@@ -40,9 +37,9 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
   late Animation<double> _fadeAnimation;
 
   // Responsive constants
-  double get _contentPadding => 12.0;
-  double get _buttonHeight => 48.0;
-  double get _cardMargin => 8.0;
+  double get _contentPadding => 16.0;
+  double get _buttonHeight => 56.0;
+  double get _cardMargin => 12.0;
 
   @override
   void initState() {
@@ -153,43 +150,74 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
       _showResultDialog(
         title: 'Determinant',
-        icon: Icons.functions,
+        icon: Icons.functions_rounded,
         iconColor: const Color(0xFF10B981),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
               'det(A) =',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 14,
-                color: Color(0xFF9CA3AF),
-              ),
-            ),
-            const SizedBox(height: 12),
-            Text(
-              det.toStringAsFixed(6),
-              style: const TextStyle(
-                fontSize: 28,
-                fontWeight: FontWeight.w800,
-                color: Color(0xFF1F2937),
+                color: Colors.grey.shade600,
+                fontWeight: FontWeight.w500,
               ),
             ),
             const SizedBox(height: 16),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF10B981).withOpacity(0.1),
+                    const Color(0xFF10B981).withOpacity(0.05),
+                ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(
+                  color: const Color(0xFF10B981).withOpacity(0.2),
+                  width: 1.5,
+                ),
+              ),
+              child: Text(
+                det.toStringAsFixed(6),
+                style: const TextStyle(
+                  fontSize: 32,
+                  fontWeight: FontWeight.w800,
+                  color: Color(0xFF065F46),
+                  fontFamily: 'Monospace',
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildInfoChip(
-                  icon: Icons.info_outline,
+                  icon: Icons.info_rounded,
                   label: det.abs() < 1e-12 ? 'Singular' : 'Non-singular',
                   color: det.abs() < 1e-12 ? Colors.orange : Colors.green,
                 ),
-                const SizedBox(width: 8),
+                const SizedBox(width: 12),
                 _buildInfoChip(
-                  icon: Icons.compare_arrows,
+                  icon: Icons.grid_4x4_rounded,
                   label: '${rows} × $rows',
-                  color: Colors.blue,
+                  color: const Color(0xFF3B82F6),
                 ),
               ],
+            ),
+            const SizedBox(height: 8),
+            Text(
+              det.abs() < 1e-12 
+                  ? 'Matrix is singular (determinant is zero)'
+                  : 'Matrix is invertible',
+              style: TextStyle(
+                fontSize: 12,
+                color: det.abs() < 1e-12 ? Colors.orange : Colors.green,
+                fontWeight: FontWeight.w500,
+              ),
             ),
           ],
         ),
@@ -224,92 +252,143 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
         return;
       }
 
-      _showResultDialog(
-        title: 'Matrix Inverse',
-        icon: Icons.swap_horiz,
-        iconColor: const Color(0xFF8B5CF6),
-        content: SizedBox(
-          width: double.maxFinite,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'A⁻¹ =',
-                style: TextStyle(
-                  fontWeight: FontWeight.w700,
-                  fontSize: 16,
-                  color: Color(0xFF374151),
-                ),
+    _showResultDialog(
+      title: 'Matrix Inverse',
+      icon: Icons.swap_horizontal_circle_rounded,
+      iconColor: const Color(0xFF8B5CF6),
+      content: SizedBox(
+        width: double.maxFinite,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const Text(
+              'A⁻¹ =',
+              style: TextStyle(
+                fontWeight: FontWeight.w700,
+                fontSize: 20,
+                color: Color(0xFF1E293B),
+                letterSpacing: -0.5,
               ),
-              const SizedBox(height: 12),
-              Container(
-                decoration: BoxDecoration(
-                  border: Border.all(color: const Color(0xFFE5E7EB)),
-                  borderRadius: BorderRadius.circular(10),
+            ),
+            const SizedBox(height: 20),
+            Container(
+              decoration: BoxDecoration(
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.5,
                 ),
-                padding: const EdgeInsets.all(12),
-                child: SingleChildScrollView(
-                  scrollDirection: Axis.horizontal,
-                  child: Column(
-                    children: inv.asMap().entries.map((entry) {
-                      final i = entry.key;
-                      final row = entry.value;
-                      return Padding(
-                        padding: EdgeInsets.only(bottom: i < inv.length - 1 ? 8 : 0),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: row.asMap().entries.map((cell) {
-                            return Container(
-                              width: 60,
-                              padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
-                              margin: const EdgeInsets.symmetric(horizontal: 2),
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                borderRadius: BorderRadius.circular(6),
-                                boxShadow: [
-                                  BoxShadow(
-                                    // ignore: deprecated_member_use
-                                    color: Colors.black.withOpacity(0.05),
-                                    blurRadius: 3,
-                                    offset: const Offset(0, 2),
-                                  ),
-                                ],
+                borderRadius: BorderRadius.circular(16),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withOpacity(0.03),
+                    blurRadius: 20,
+                    spreadRadius: 1,
+                  ),
+                ],
+              ),
+              padding: const EdgeInsets.all(16),
+              child: SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Column(
+                  children: inv.asMap().entries.map((entry) {
+                    final i = entry.key;
+                    final row = entry.value;
+                    return Padding(
+                      padding: EdgeInsets.only(bottom: i < inv.length - 1 ? 12 : 0),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: row.asMap().entries.map((cell) {
+                          return Container(
+                            width: 70,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                            margin: const EdgeInsets.symmetric(horizontal: 3),
+                            decoration: BoxDecoration(
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white,
+                                  const Color(0xFFF8FAFC),
+                              ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
                               ),
-                              child: Text(
-                                cell.value.toStringAsFixed(precision),
-                                textAlign: TextAlign.center,
-                                style: const TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w500,
-                                  fontFamily: 'Monospace',
+                              borderRadius: BorderRadius.circular(10),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: Colors.black.withOpacity(0.05),
+                                  blurRadius: 8,
+                                  offset: const Offset(0, 3),
                                 ),
+                              ],
+                            ),
+                            child: Text(
+                              cell.value.toStringAsFixed(precision),
+                              textAlign: TextAlign.center,
+                              style: const TextStyle(
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                                fontFamily: 'Monospace',
+                                color: Color(0xFF334155),
                               ),
-                            );
-                          }).toList(),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    );
+                  }).toList(),
+                ),
+              ),
+            ),
+            const SizedBox(height: 24),
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 48,
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFF8B5CF6),
+                          const Color(0xFF7C3AED),
+                      ],
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                          blurRadius: 15,
+                          offset: const Offset(0, 4),
                         ),
-                      );
-                    }).toList(),
+                      ],
+                    ),
+                    child: ElevatedButton.icon(
+                      onPressed: () => _copyMatrixToClipboard(inv),
+                      icon: const Icon(Icons.copy_all_rounded, size: 18, color: Colors.white),
+                      label: const Text(
+                        'Copy Matrix',
+                        style: TextStyle(
+                          fontSize: 14,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.white,
+                        ),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.transparent,
+                        shadowColor: Colors.transparent,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                    ),
                   ),
                 ),
-              ),
-              const SizedBox(height: 16),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton.icon(
-                  onPressed: () => _copyMatrixToClipboard(inv),
-                  icon: const Icon(Icons.copy, size: 16),
-                  label: const Text('Copy Matrix', style: TextStyle(fontSize: 13)),
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: const Color(0xFFF3F4F6),
-                    foregroundColor: const Color(0xFF374151),
-                    padding: const EdgeInsets.symmetric(vertical: 12),
-                  ),
-                ),
-              ),
-            ],
-          ),
+              ],
+            ),
+          ],
         ),
-      );
+      ),
+    );
       setState(() {
         lastOperationLabel = 'Inverse Calculated';
         operationStatus = 'A⁻¹ computed successfully';
@@ -457,48 +536,99 @@ class _MatrixCalculatorScreenState extends State<MatrixCalculatorScreen>
 
   // --- UI COMPONENTS ---
 
-  // Fungsi helper untuk mengambil profil dengan ID dinamis
-  // ignore: unused_element
   Future<Map<String, dynamic>?> _fetchUserProfile() async {
-    final myId = await DeviceIdHelper.getDeviceId();
-    return await Supabase.instance.client
-        .from('profiles')
-        .select()
-        .eq('id', myId)
-        .maybeSingle();
+    try {
+      final myId = await DeviceIdHelper.getDeviceId();
+      return await Supabase.instance.client
+          .from('profiles')
+          .select()
+          .eq('id', myId)
+          .maybeSingle();
+    } catch (e) {
+      return null;
+    }
   }
 
   PreferredSizeWidget _buildAppBar() {
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
+    
     return AppBar(
       backgroundColor: Colors.white,
-      foregroundColor: const Color(0xFF1A1A1A),
+      foregroundColor: const Color(0xFF1E293B),
       centerTitle: true,
       title: Row(
         mainAxisAlignment: MainAxisAlignment.center,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Icons.grid_on, color: Theme.of(context).colorScheme.primary, size: 18),
-          const SizedBox(width: 6),
-          const Text(
-            'MATRIX SOLVER',
+          Container(
+            width: isSmallScreen ? 32 : 36,
+            height: isSmallScreen ? 32 : 36,
+            decoration: BoxDecoration(
+              gradient: const LinearGradient(
+                colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(isSmallScreen ? 8 : 10),
+              boxShadow: [
+                BoxShadow(
+                  color: const Color(0xFF6A11CB).withOpacity(0.2),
+                  blurRadius: 8,
+                  offset: const Offset(0, 2),
+                ),
+              ],
+            ),
+            child: Center(
+              child: Icon(
+                Icons.grid_on_rounded,
+                color: Colors.white,
+                size: isSmallScreen ? 16 : 18,
+              ),
+            ),
+          ),
+          SizedBox(width: isSmallScreen ? 8 : 10),
+          Text(
+            isSmallScreen ? 'MATRIX SOLVER' : 'MATRIX SOLVER PRO',
             style: TextStyle(
-              fontWeight: FontWeight.w700,
-              fontSize: 14,
-              letterSpacing: 0.3,
+              fontWeight: FontWeight.w800,
+              fontSize: isSmallScreen ? 14 : 16,
+              letterSpacing: 0.5,
+              color: const Color(0xFF1E293B),
             ),
           ),
         ],
       ),
       actions: [
-        IconButton(
-          onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
-          icon: Icon(Icons.settings, color: Theme.of(context).colorScheme.primary, size: 20),
-          tooltip: 'Settings',
-          padding: const EdgeInsets.all(8),
+        Container(
+          margin: EdgeInsets.only(right: isSmallScreen ? 8 : 12),
+          child: IconButton(
+            onPressed: () => _scaffoldKey.currentState?.openEndDrawer(),
+            icon: Container(
+              width: isSmallScreen ? 36 : 40,
+              height: isSmallScreen ? 36 : 40,
+              decoration: BoxDecoration(
+                color: const Color(0xFFF1F5F9),
+                borderRadius: BorderRadius.circular(isSmallScreen ? 10 : 12),
+                border: Border.all(
+                  color: const Color(0xFFE2E8F0),
+                  width: 1.5,
+                ),
+              ),
+              child: Icon(
+                Icons.settings_rounded,
+                color: const Color(0xFF475569),
+                size: isSmallScreen ? 18 : 20,
+              ),
+            ),
+            tooltip: 'Settings',
+          ),
         ),
       ],
-      toolbarHeight: 52,
-      elevation: 1,
+      toolbarHeight: isSmallScreen ? 56 : 64,
+      elevation: 0,
+      shadowColor: Colors.black.withOpacity(0.05),
+      surfaceTintColor: Colors.white,
+      scrolledUnderElevation: 1,
     );
   }
 
@@ -506,7 +636,7 @@ Widget _buildSettingsDrawer() {
     return FutureBuilder(
       future: _fetchUserProfile(),
       builder: (context, snapshot) {
-        
+
         String displayName = 'Pengguna Baru';
         String displaySub = 'Ketuk untuk isi nama';
 
@@ -532,31 +662,40 @@ Widget _buildSettingsDrawer() {
                     setState(() {}); // Refresh setelah kembali
                   },
                   child: Container(
-                    height: 160,
+                    height: 180,
                     decoration: BoxDecoration(
                       gradient: LinearGradient(
                         colors: [
-                          Theme.of(context).colorScheme.primary,
-                          Theme.of(context).colorScheme.secondary,
+                          const Color(0xFF6A11CB),
+                          const Color(0xFF2575FC),
                         ],
                         begin: Alignment.topLeft,
                         end: Alignment.bottomRight,
                       ),
                     ),
                     child: Padding(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(20),
                       child: Column(
                         mainAxisAlignment: MainAxisAlignment.end,
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Row(
                             children: [
-                              CircleAvatar(
-                                // ignore: deprecated_member_use
-                                backgroundColor: Colors.white.withOpacity(0.2),
-                                child: const Icon(Icons.person, color: Colors.white),
+                              Container(
+                                width: 60,
+                                height: 60,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                                ),
+                                child: const Icon(
+                                  Icons.person_rounded,
+                                  color: Colors.white,
+                                  size: 30,
+                                ),
                               ),
-                              const SizedBox(width: 12),
+                              const SizedBox(width: 16),
                               Expanded(
                                 child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -565,19 +704,18 @@ Widget _buildSettingsDrawer() {
                                       displayName, 
                                       style: const TextStyle(
                                         color: Colors.white,
-                                        fontSize: 18,
+                                        fontSize: 20,
                                         fontWeight: FontWeight.w700,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
                                     ),
+                                    const SizedBox(height: 4),
                                     Text(
                                       displaySub,
                                       style: TextStyle(
-                                        // ignore: deprecated_member_use
-                                        // ignore: deprecated_member_use
                                         color: Colors.white.withOpacity(0.9),
-                                        fontSize: 12,
+                                        fontSize: 14,
                                       ),
                                       maxLines: 1,
                                       overflow: TextOverflow.ellipsis,
@@ -585,7 +723,19 @@ Widget _buildSettingsDrawer() {
                                   ],
                                 ),
                               ),
-                              const Icon(Icons.edit, color: Colors.white70, size: 16),
+                              Container(
+                                width: 36,
+                                height: 36,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withOpacity(0.2),
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(
+                                  Icons.edit_rounded,
+                                  color: Colors.white,
+                                  size: 16,
+                                ),
+                              ),
                             ],
                           ),
                         ],
@@ -596,52 +746,165 @@ Widget _buildSettingsDrawer() {
 
                 // MENU LAINNYA
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
                   child: Column(
                     children: [
-                      const Text('DISPLAY SETTINGS', style: TextStyle(color: Colors.grey, fontSize: 11, fontWeight: FontWeight.bold)),
-                      const SizedBox(height: 12),
-                      
+                      Container(
+                        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(20),
+                        ),
+                        child: const Text(
+                          'DISPLAY SETTINGS',
+                          style: TextStyle(
+                            color: Color(0xFF64748B),
+                            fontSize: 11,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 1,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+
                       // Slider Precision
-                      Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 20,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(children: [
-                                Icon(Icons.precision_manufacturing, size: 20, color: Theme.of(context).primaryColor), 
-                                SizedBox(width: 8), 
-                                Text('Decimal Precision', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
-                              ]),
-                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.precision_manufacturing_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Decimal Precision',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Set number of decimal places',
+                                        style: TextStyle(
+                                          color: Color(0xFF64748B),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Slider(
-                                      value: precision.toDouble(), 
-                                      min: 0, 
-                                      max: 10, 
-                                      divisions: 10, 
-                                      onChanged: (val) => setState(() => precision = val.toInt())
+                                    child: SliderTheme(
+                                      data: SliderThemeData(
+                                        trackHeight: 6,
+                                        thumbShape: RoundSliderThumbShape(
+                                          enabledThumbRadius: 12,
+                                          disabledThumbRadius: 8,
+                                          elevation: 4,
+                                        ),
+                                        overlayShape: RoundSliderOverlayShape(
+                                          overlayRadius: 20,
+                                        ),
+                                        activeTrackColor: const Color(0xFF8B5CF6),
+                                        inactiveTrackColor: const Color(0xFFE2E8F0),
+                                        thumbColor: const Color(0xFF8B5CF6),
+                                      ),
+                                      child: Slider(
+                                        value: precision.toDouble(), 
+                                        min: 0, 
+                                        max: 10, 
+                                        divisions: 10, 
+                                        onChanged: (val) => setState(() => precision = val.toInt()),
+                                        label: '$precision',
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  const SizedBox(width: 16),
                                   Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
-                                      // ignore: deprecated_member_use
-                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF8B5CF6), Color(0xFF7C3AED)],
+                                        begin: Alignment.centerLeft,
+                                        end: Alignment.centerRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF8B5CF6).withOpacity(0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: Text(
                                       '$precision',
-                                      style: TextStyle(
-                                        fontWeight: FontWeight.w700,
-                                        color: Theme.of(context).primaryColor,
+                                      style: const TextStyle(
+                                        fontWeight: FontWeight.w800,
+                                        fontSize: 16,
+                                        color: Colors.white,
                                       ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    '0',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    '10',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ],
@@ -651,47 +914,145 @@ Widget _buildSettingsDrawer() {
                         ),
                       ),
                       const SizedBox(height: 20),
-                      
+
                       // Slider Scale
-                      Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 20,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
                         child: Padding(
-                          padding: const EdgeInsets.all(16),
+                          padding: const EdgeInsets.all(20),
                           child: Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              Row(children: [
-                                Icon(Icons.text_fields, size: 20, color: Theme.of(context).primaryColor), 
-                                SizedBox(width: 8), 
-                                Text('Display Scale', style: TextStyle(fontWeight: FontWeight.w600, fontSize: 14))
-                              ]),
-                              SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.text_fields_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  const Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                      Text(
+                                        'Display Scale',
+                                        style: TextStyle(
+                                          fontWeight: FontWeight.w700,
+                                          fontSize: 16,
+                                          color: Color(0xFF1E293B),
+                                        ),
+                                      ),
+                                      SizedBox(height: 2),
+                                      Text(
+                                        'Adjust text size',
+                                        style: TextStyle(
+                                          color: Color(0xFF64748B),
+                                          fontSize: 12,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 20),
                               Row(
                                 children: [
                                   Expanded(
-                                    child: Slider(
-                                      value: _displayScale, 
-                                      min: 0.8, 
-                                      max: 1.2, 
-                                      divisions: 4, 
-                                      onChanged: (val) => setState(() => _displayScale = val)
+                                    child: SliderTheme(
+                                      data: SliderThemeData(
+                                        trackHeight: 6,
+                                        thumbShape: RoundSliderThumbShape(
+                                          enabledThumbRadius: 12,
+                                          disabledThumbRadius: 8,
+                                          elevation: 4,
+                                        ),
+                                        overlayShape: RoundSliderOverlayShape(
+                                          overlayRadius: 20,
+                                        ),
+                                        activeTrackColor: const Color(0xFF10B981),
+                                        inactiveTrackColor: const Color(0xFFE2E8F0),
+                                        thumbColor: const Color(0xFF10B981),
+                                      ),
+                                      child: Slider(
+                                        value: _displayScale, 
+                                        min: 0.8, 
+                                        max: 1.2, 
+                                        divisions: 4, 
+                                        onChanged: (val) => setState(() => _displayScale = val),
+                                        label: _getDisplayScaleLabel(),
+                                      ),
                                     ),
                                   ),
-                                  SizedBox(width: 12),
+                                  const SizedBox(width: 16),
                                   Container(
-                                    padding: EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                                     decoration: BoxDecoration(
-                                      // ignore: deprecated_member_use
-                                      color: Theme.of(context).primaryColor.withOpacity(0.1),
-                                      borderRadius: BorderRadius.circular(6),
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFF10B981), Color(0xFF059669)],
+                                        begin: Alignment.centerLeft,
+                                        end: Alignment.centerRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: const Color(0xFF10B981).withOpacity(0.3),
+                                          blurRadius: 10,
+                                          offset: const Offset(0, 3),
+                                        ),
+                                      ],
                                     ),
                                     child: Text(
                                       _getDisplayScaleLabel(),
-                                      style: TextStyle(
+                                      style: const TextStyle(
                                         fontWeight: FontWeight.w700,
-                                        color: Theme.of(context).primaryColor,
+                                        fontSize: 14,
+                                        color: Colors.white,
                                       ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                children: [
+                                  Text(
+                                    'Small',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                  Text(
+                                    'Large',
+                                    style: TextStyle(
+                                      color: Colors.grey.shade500,
+                                      fontSize: 12,
                                     ),
                                   ),
                                 ],
@@ -703,16 +1064,110 @@ Widget _buildSettingsDrawer() {
                       const SizedBox(height: 20),
 
                       // Help
-                      Card(
-                        elevation: 2,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                        child: ListTile(
-                          leading: Icon(Icons.help_outline, color: Theme.of(context).primaryColor),
-                          title: const Text('Help & Tutorial'),
-                          onTap: () => _showHelpDialog(),
+                      Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(16),
+                          border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 20,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Material(
+                          color: Colors.transparent,
+                          child: InkWell(
+                            borderRadius: BorderRadius.circular(16),
+                            onTap: () => _showHelpDialog(),
+                            child: Padding(
+                              padding: const EdgeInsets.all(20),
+                              child: Row(
+                                children: [
+                                  Container(
+                                    width: 40,
+                                    height: 40,
+                                    decoration: BoxDecoration(
+                                      gradient: const LinearGradient(
+                                        colors: [Color(0xFFF59E0B), Color(0xFFD97706)],
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                      ),
+                                      borderRadius: BorderRadius.circular(10),
+                                    ),
+                                    child: const Center(
+                                      child: Icon(
+                                        Icons.help_outline_rounded,
+                                        color: Colors.white,
+                                        size: 20,
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 16),
+                                  const Expanded(
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(
+                                          'Help & Tutorial',
+                                          style: TextStyle(
+                                            fontWeight: FontWeight.w700,
+                                            fontSize: 16,
+                                            color: Color(0xFF1E293B),
+                                          ),
+                                        ),
+                                        SizedBox(height: 2),
+                                        Text(
+                                          'Learn how to use the app',
+                                          style: TextStyle(
+                                            color: Color(0xFF64748B),
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const Icon(
+                                    Icons.chevron_right_rounded,
+                                    color: Color(0xFFCBD5E1),
+                                    size: 24,
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      SizedBox(height: 20),
+                      const SizedBox(height: 30),
+                      
+                      // App Info
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: const Color(0xFFF8FAFC),
+                          borderRadius: BorderRadius.circular(16),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(
+                              Icons.code_rounded,
+                              size: 14,
+                              color: const Color(0xFF64748B),
+                            ),
+                            const SizedBox(width: 8),
+                            Text(
+                              'Matrix Solver Pro • v1.0 • Precision: $precision',
+                              style: TextStyle(
+                                color: const Color(0xFF64748B).withOpacity(0.8),
+                                fontSize: 11,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
                     ],
                   ),
                 ),
@@ -727,148 +1182,195 @@ Widget _buildSettingsDrawer() {
   Widget _buildMatrixInputCard() {
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Card(
-        elevation: 4,
+      child: Container(
         margin: EdgeInsets.all(_cardMargin),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    Theme.of(context).colorScheme.primary,
-                    Theme.of(context).colorScheme.secondary,
-                  ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      // ignore: deprecated_member_use
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.grid_on, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  const Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'INPUT MATRIX',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        SizedBox(height: 2),
-                        Text(
-                          'Enter matrix A and vector b for Ax = b',
-                          style: TextStyle(
-                            color: Colors.white70,
-                            fontSize: 11,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (solution.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        '${solution.length} variables',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-            
-            // Body
-            Padding(
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                children: [
-                  // Dimension Controls
-                  _buildDimensionControls(),
-                  const SizedBox(height: 16),
-                  
-                  // Matrix Grid
-                  SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: _buildMatrixGrid(),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Status Bar
-                  Container(
-                    padding: const EdgeInsets.symmetric(
-                      vertical: 10,
-                      horizontal: 12,
-                    ),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFFF9FAFB),
-                      borderRadius: BorderRadius.circular(10),
-                      border: Border.all(color: const Color(0xFFE5E7EB)),
-                    ),
-                    child: Row(
-                      children: [
-                        Icon(
-                          _getStatusIcon(),
-                          color: _getStatusColor(),
-                          size: 14,
-                        ),
-                        const SizedBox(width: 8),
-                        Expanded(
-                          child: Text(
-                            operationStatus,
-                            style: TextStyle(
-                              color: _getStatusColor(),
-                              fontWeight: FontWeight.w500,
-                              fontSize: 12,
-                            ),
-                            maxLines: 2,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 16),
-                  
-                  // Action Buttons
-                  _buildActionButtons(),
-                ],
-              ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 30,
+              spreadRadius: 2,
             ),
           ],
+        ),
+        child: Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF6A11CB),
+                      const Color(0xFF2575FC),
+                  ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                      ),
+                      child: const Icon(Icons.grid_on_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'INPUT MATRIX',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            'Enter matrix A and vector b for Ax = b',
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (solution.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          '${solution.length} variables',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              
+              // Body
+              Padding(
+                padding: const EdgeInsets.all(24),
+                child: Column(
+                  children: [
+                    // Dimension Controls
+                    _buildDimensionControls(),
+                    const SizedBox(height: 24),
+                    
+                    // Matrix Grid
+                    SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: _buildMatrixGrid(),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Status Bar
+                    Container(
+                      padding: const EdgeInsets.symmetric(
+                        vertical: 16,
+                        horizontal: 20,
+                      ),
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          colors: [
+                            const Color(0xFFF8FAFC),
+                            const Color(0xFFF1F5F9),
+                        ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                        borderRadius: BorderRadius.circular(16),
+                        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                      ),
+                      child: Row(
+                        children: [
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              color: _getStatusColor().withOpacity(0.1),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: _getStatusColor().withOpacity(0.2)),
+                            ),
+                            child: Center(
+                              child: Icon(
+                                _getStatusIcon(),
+                                color: _getStatusColor(),
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 16),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                const Text(
+                                  'Status',
+                                  style: TextStyle(
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w600,
+                                    color: Color(0xFF64748B),
+                                    letterSpacing: 0.5,
+                                  ),
+                                ),
+                                const SizedBox(height: 4),
+                                Text(
+                                  operationStatus,
+                                  style: TextStyle(
+                                    color: _getStatusColor(),
+                                    fontWeight: FontWeight.w600,
+                                    fontSize: 14,
+                                  ),
+                                  maxLines: 2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ],
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Action Buttons
+                    _buildActionButtons(),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -876,64 +1378,110 @@ Widget _buildSettingsDrawer() {
 
   // 1. WADAH UTAMA (Card)
   Widget _buildDimensionControls() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(12),
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
+    
+    return Container(
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 20,
+            spreadRadius: 1,
+          ),
+        ],
       ),
       child: Padding(
-        // Kurangi padding horizontal card sedikit agar ruang untuk tombol lebih luas
-        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+        padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
         child: Column(
           children: [
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: const [
-                Icon(Icons.aspect_ratio, size: 18, color: Color(0xFF6B7280)),
-                SizedBox(width: 6),
+              children: [
+                Icon(
+                  Icons.aspect_ratio_rounded,
+                  size: isSmallScreen ? 16 : 18,
+                  color: const Color(0xFF6A11CB),
+                ),
+                const SizedBox(width: 8),
                 Text(
                   'MATRIX DIMENSIONS',
                   style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: Color(0xFF6B7280),
+                    fontSize: isSmallScreen ? 12 : 13,
+                    fontWeight: FontWeight.w700,
+                    color: const Color(0xFF6A11CB),
+                    letterSpacing: 0.5,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            // Bagian Row Pengatur
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceEvenly, // Pastikan terbagi rata
-              children: [
-                // KONTROL ROWS (KIRI)
-                Expanded(
-                  child: _buildDimensionControl(
+            const SizedBox(height: 16),
+            // Layout responsif untuk mobile
+            if (isSmallScreen)
+              Column(
+                children: [
+                  // ROWS control
+                  _buildDimensionControl(
                     label: 'ROWS',
                     value: rows,
                     onDecrease: rows > minDim ? () => _resize(rows - 1, cols) : null,
                     onIncrease: rows < maxDim ? () => _resize(rows + 1, cols) : null,
+                    isSmallScreen: true,
                   ),
-                ),
-                
-                // GARIS PEMISAH TENGAH
-                Container(
-                  width: 1,
-                  height: 32, // Tinggi garis disesuaikan
-                  color: const Color(0xFFE5E7EB),
-                ),
-
-                // KONTROL COLUMNS (KANAN)
-                Expanded(
-                  child: _buildDimensionControl(
+                  const SizedBox(height: 16),
+                  // Separator
+                  Container(
+                    width: double.infinity,
+                    height: 1,
+                    color: const Color(0xFFF1F5F9),
+                  ),
+                  const SizedBox(height: 16),
+                  // COLUMNS control
+                  _buildDimensionControl(
                     label: 'COLUMNS',
                     value: cols,
                     onDecrease: cols > minDim ? () => _resize(rows, cols - 1) : null,
                     onIncrease: cols < maxDim ? () => _resize(rows, cols + 1) : null,
+                    isSmallScreen: true,
                   ),
-                ),
-              ],
-            ),
+                ],
+              )
+            else
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+                children: [
+                  // KONTROL ROWS (KIRI)
+                  Expanded(
+                    child: _buildDimensionControl(
+                      label: 'ROWS',
+                      value: rows,
+                      onDecrease: rows > minDim ? () => _resize(rows - 1, cols) : null,
+                      onIncrease: rows < maxDim ? () => _resize(rows + 1, cols) : null,
+                      isSmallScreen: false,
+                    ),
+                  ),
+                  
+                  // GARIS PEMISAH TENGAH
+                  Container(
+                    width: 1,
+                    height: 40,
+                    color: const Color(0xFFF1F5F9),
+                  ),
+
+                  // KONTROL COLUMNS (KANAN)
+                  Expanded(
+                    child: _buildDimensionControl(
+                      label: 'COLUMNS',
+                      value: cols,
+                      onDecrease: cols > minDim ? () => _resize(rows, cols - 1) : null,
+                      onIncrease: cols < maxDim ? () => _resize(rows, cols + 1) : null,
+                      isSmallScreen: false,
+                    ),
+                  ),
+                ],
+              ),
           ],
         ),
       ),
@@ -946,52 +1494,72 @@ Widget _buildSettingsDrawer() {
     required int value,
     VoidCallback? onDecrease,
     VoidCallback? onIncrease,
+    required bool isSmallScreen,
   }) {
     return Column(
       children: [
         Text(
           label,
-          style: const TextStyle(
-            fontSize: 10,
+          style: TextStyle(
+            fontSize: isSmallScreen ? 10 : 11,
             fontWeight: FontWeight.w600,
-            color: Color(0xFF6B7280),
+            color: const Color(0xFF64748B),
+            letterSpacing: 1,
           ),
         ),
         const SizedBox(height: 8),
         Row(
-          mainAxisAlignment: MainAxisAlignment.center, // KUNCI: Rata Tengah
-          mainAxisSize: MainAxisSize.min,            // Agar tidak melebar sembarangan
+          mainAxisAlignment: MainAxisAlignment.center,
+          mainAxisSize: MainAxisSize.min,
           children: [
             _buildControlButton(
-              icon: Icons.remove,
+              icon: Icons.remove_rounded,
               onPressed: onDecrease,
               isEnabled: onDecrease != null,
+              isSmallScreen: isSmallScreen,
             ),
             
-            // KOTAK ANGKA (Diperbaiki ukurannya agar tidak mendorong tombol keluar)
+            const SizedBox(width: 12), // TAMBAH JARAK DI SINI
+            
+            // KOTAK ANGKA - PERBESAR
             Container(
-              width: 36, // Lebar pas (tidak terlalu lebar)
-              padding: const EdgeInsets.symmetric(vertical: 8),
-              margin: const EdgeInsets.symmetric(horizontal: 6), // Jarak diperkecil (sebelumnya 10)
+              width: isSmallScreen ? 50 : 60, // PERBESAR DARI 28/32
+              height: isSmallScreen ? 50 : 60, // TAMBAH TINGGI
               decoration: BoxDecoration(
-                color: const Color(0xFFF3F4F6),
-                borderRadius: BorderRadius.circular(8),
+                gradient: const LinearGradient(
+                  colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(12), // PERBESAR RADIUS
+                boxShadow: [
+                  BoxShadow(
+                    color: const Color(0xFF6A11CB).withOpacity(0.3),
+                    blurRadius: 12, // PERBESAR SHADOW
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-              child: Text(
-                '$value',
-                textAlign: TextAlign.center,
-                style: const TextStyle(
-                  fontSize: 16, // Font sedikit disesuaikan
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
+              child: Center(
+                child: Text(
+                  '$value',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    fontSize: isSmallScreen ? 24 : 28, // PERBESAR FONT
+                    fontWeight: FontWeight.w800,
+                    color: Colors.white,
+                  ),
                 ),
               ),
             ),
             
+            const SizedBox(width: 12), // TAMBAH JARAK DI SINI
+            
             _buildControlButton(
-              icon: Icons.add,
+              icon: Icons.add_rounded,
               onPressed: onIncrease,
               isEnabled: onIncrease != null,
+              isSmallScreen: isSmallScreen,
             ),
           ],
         ),
@@ -1004,157 +1572,242 @@ Widget _buildSettingsDrawer() {
     required IconData icon,
     required VoidCallback? onPressed,
     required bool isEnabled,
+    required bool isSmallScreen,
   }) {
     return Material(
       borderRadius: BorderRadius.circular(10),
-      color: isEnabled
-          ? Theme.of(context).colorScheme.primary
-          : const Color(0xFFE5E7EB),
+      color: Colors.transparent,
       child: InkWell(
         borderRadius: BorderRadius.circular(10),
         onTap: onPressed,
-        // Ukuran tombol 40x40 (Nyaman disentuh, tapi muat di layar)
         child: Container(
-          width: 40,  
-          height: 40,
-          alignment: Alignment.center, // Pastikan ikon di tengah tombol
+          width: isSmallScreen ? 44 : 50, // PERBESAR DARI 32/36
+          height: isSmallScreen ? 44 : 50, // PERBESAR DARI 32/36
           decoration: BoxDecoration(
+            color: isEnabled
+                ? const Color(0xFFF1F5F9)
+                : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(10),
+            border: Border.all(
+              color: isEnabled
+                  ? const Color(0xFFE2E8F0)
+                  : const Color(0xFFF1F5F9),
+              width: 2, // PERBESAR BORDER
+            ),
+            boxShadow: isEnabled ? [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.05),
+                blurRadius: 8,
+                offset: const Offset(0, 2),
+              ),
+            ] : [],
           ),
-          child: Icon(
-            icon,
-            size: 20,
-            color: isEnabled ? Colors.white : const Color(0xFF9CA3AF),
+          child: Center(
+            child: Icon(
+              icon,
+              size: isSmallScreen ? 22 : 24, // PERBESAR ICON
+              color: isEnabled ? const Color(0xFF475569) : const Color(0xFFCBD5E1),
+            ),
           ),
         ),
       ),
     );
   }
 
-
   Widget _buildMatrixGrid() {
-    final cellWidth = MediaQuery.of(context).size.width / (cols + 3) - 10;
-    // ignore: unused_local_variable
-    final cellHeight = 45.0;
-
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
+    final screenWidth = MediaQuery.of(context).size.width;
+    
+    // PERHITUNGAN LEBAR CELL YANG LEBIH KONSISTEN
+    final int totalColumns = cols + 1;
+    final double availableWidth = screenWidth - (isSmallScreen ? 60 : 80); // Kurangi padding
+    final double minCellWidth = isSmallScreen ? 55 : 65; // PERKECIL dari sebelumnya
+    final double maxCellWidth = isSmallScreen ? 70 : 80;
+    
+    // Hitung lebar per kolom
+    final double calculatedWidth = availableWidth / totalColumns;
+    final double cellWidth = calculatedWidth.clamp(minCellWidth, maxCellWidth);
+    
     return Container(
+      clipBehavior: Clip.antiAlias,
       decoration: BoxDecoration(
-        border: Border.all(color: const Color(0xFFE5E7EB)),
+        border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
         borderRadius: BorderRadius.circular(12),
       ),
-      child: Column(
-        children: [
-          // Header yang lebih kompak
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 8),
-            decoration: BoxDecoration(
-              color: const Color(0xFFF9FAFB),
-              border: Border(bottom: BorderSide(color: Colors.grey.shade200)),
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // ========== HEADER (x1, x2, x3, →) ==========
+            Container(
+              padding: EdgeInsets.symmetric(
+                vertical: isSmallScreen ? 8 : 10,
+                horizontal: isSmallScreen ? 12 : 16,
+              ),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF6A11CB),
+                    const Color(0xFF2575FC),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+              ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  const SizedBox(width: 40),
+                  // SPACE UNTUK ROW LABELS (R1, R2, dll)
+                  SizedBox(
+                    width: isSmallScreen ? 48 : 56, // PERBESAR dari 50/58
+                    child: Center(
+                      child: Text(
+                        'Row',
+                        style: TextStyle(
+                          color: Colors.white.withOpacity(0.8),
+                          fontSize: isSmallScreen ? 10 : 11,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                    ),
+                  ),
+                  
+                  // HEADER UNTUK KOLOM MATRIKS A (x1, x2, x3, ...)
                   ...List.generate(cols, (j) => SizedBox(
                     width: cellWidth,
                     child: Center(
-                      child: Text(
-                        'x${j+1}',
-                        style: const TextStyle(
-                          fontWeight: FontWeight.w700,
-                          color: Color(0xFF374151),
-                          fontSize: 11,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: isSmallScreen ? 3 : 4,
+                          horizontal: isSmallScreen ? 6 : 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                        ),
+                        child: Text(
+                          'x${j+1}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.w700,
+                            color: const Color(0xFF6A11CB),
+                            fontSize: isSmallScreen ? 11 : 12, // PERKECIL
+                          ),
                         ),
                       ),
                     ),
                   )),
+                  
+                  // HEADER UNTUK KOLOM B (→)
                   SizedBox(
                     width: cellWidth,
                     child: Center(
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.arrow_right_alt, 
-                              size: 12, color: Colors.red.shade600),
-                          const SizedBox(width: 2),
-                          Text(
-                            'b',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w800,
-                              color: Colors.red.shade600,
-                              fontSize: 11,
+                      child: Container(
+                        padding: EdgeInsets.symmetric(
+                          vertical: isSmallScreen ? 3 : 4,
+                          horizontal: isSmallScreen ? 4 : 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.red.shade600,
+                          borderRadius: BorderRadius.circular(6),
+                          border: Border.all(color: Colors.white.withOpacity(0.2), width: 1),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Icon(
+                              Icons.arrow_forward_rounded, // Ganti icon agar lebih jelas
+                              size: isSmallScreen ? 10 : 12,
+                              color: Colors.white,
                             ),
-                          ),
-                        ],
+                            SizedBox(width: 2),
+                            Text(
+                              'b',
+                              style: TextStyle(
+                                fontWeight: FontWeight.w800,
+                                color: Colors.white,
+                                fontSize: isSmallScreen ? 11 : 12,
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
                 ],
               ),
             ),
-          ),
 
-          // Rows dengan input yang lebih besar untuk touch
-          ...List.generate(rows, (i) => Container(
-            padding: const EdgeInsets.symmetric(vertical: 4),
-            decoration: BoxDecoration(
-              color: i % 2 == 0 ? Colors.white : const Color(0xFFFCFCFC),
-              border: i < rows - 1
-                ? const Border(bottom: BorderSide(color: Color(0xFFF3F4F6)))
-                : null,
-            ),
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
+            // ========== DATA ROWS (R1, R2, R3, R4) ==========
+            ...List.generate(rows, (i) => Container(
+              padding: EdgeInsets.symmetric(
+                vertical: isSmallScreen ? 6 : 8,
+                horizontal: isSmallScreen ? 12 : 16,
+              ),
+              decoration: BoxDecoration(
+                color: i % 2 == 0 ? Colors.white : const Color(0xFFF8FAFC),
+                border: i < rows - 1
+                  ? const Border(bottom: BorderSide(color: Color(0xFFF1F5F9)))
+                  : null,
+              ),
               child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
+                  // ROW LABEL (R1, R2, dll)
                   SizedBox(
-                    width: 40,
+                    width: isSmallScreen ? 48 : 56, // PERBESAR dari 50/58
                     child: Center(
                       child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 4,
-                          vertical: 2,
+                        padding: EdgeInsets.symmetric(
+                          horizontal: isSmallScreen ? 6 : 8,
+                          vertical: isSmallScreen ? 4 : 6,
                         ),
                         decoration: BoxDecoration(
-                          color: const Color(0xFFF3F4F6),
-                          borderRadius: BorderRadius.circular(4),
+                          color: const Color(0xFF6A11CB),
+                          borderRadius: BorderRadius.circular(6),
                         ),
                         child: Text(
                           'R${i+1}',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.w700,
-                            color: Color(0xFF6B7280),
-                            fontSize: 9,
+                          style: TextStyle(
+                            fontWeight: FontWeight.w800,
+                            color: Colors.white,
+                            fontSize: isSmallScreen ? 11 : 12, // PERKECIL
                           ),
                         ),
                       ),
                     ),
                   ),
+                  
+                  // INPUT FIELDS UNTUK MATRIKS A
                   ...List.generate(cols, (j) => Container(
                     width: cellWidth,
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
                     child: TextField(
                       controller: controllers[i][j],
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        fontSize: 13,
-                        fontWeight: FontWeight.w500,
+                      style: TextStyle(
+                        fontSize: isSmallScreen ? 13 : 14, // PERKECIL
+                        fontWeight: FontWeight.w600,
+                        color: const Color(0xFF1E293B),
                       ),
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: isSmallScreen ? 10 : 12, // PERKECIL
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: const BorderSide(color: Color(0xFFE5E7EB)),
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(color: Color(0xFFE2E8F0)),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: BorderSide(
-                            color: Theme.of(context).colorScheme.primary,
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: const BorderSide(
+                            color: Color(0xFF6A11CB),
                             width: 1.5,
                           ),
                         ),
@@ -1173,31 +1826,35 @@ Widget _buildSettingsDrawer() {
                       ],
                     ),
                   )),
+                  
+                  // INPUT FIELD UNTUK VECTOR B (→)
                   Container(
                     width: cellWidth,
-                    padding: const EdgeInsets.symmetric(horizontal: 2),
+                    padding: EdgeInsets.symmetric(horizontal: isSmallScreen ? 2 : 4),
                     child: TextField(
                       controller: controllers[i][cols],
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 13,
+                        fontSize: isSmallScreen ? 13 : 14, // PERKECIL
                         fontWeight: FontWeight.w700,
-                        color: Colors.red.shade600,
+                        color: Colors.red.shade700,
                       ),
                       decoration: InputDecoration(
-                        contentPadding: const EdgeInsets.symmetric(vertical: 12),
+                        contentPadding: EdgeInsets.symmetric(
+                          vertical: isSmallScreen ? 10 : 12, // PERKECIL
+                        ),
                         border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: BorderSide(color: Colors.red.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.red.shade400),
                         ),
                         enabledBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
-                          borderSide: BorderSide(color: Colors.red.shade300),
+                          borderRadius: BorderRadius.circular(8),
+                          borderSide: BorderSide(color: Colors.red.shade400),
                         ),
                         focusedBorder: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(6),
+                          borderRadius: BorderRadius.circular(8),
                           borderSide: BorderSide(
-                            color: Colors.red.shade600,
+                            color: Colors.red.shade700,
                             width: 1.5,
                           ),
                         ),
@@ -1209,9 +1866,9 @@ Widget _buildSettingsDrawer() {
                   ),
                 ],
               ),
-            ),
-          )),
-        ],
+            )),
+          ],
+        ),
       ),
     );
   }
@@ -1224,7 +1881,7 @@ Widget _buildSettingsDrawer() {
           width: double.infinity,
           child: _buildPrimaryButton(),
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: 16),
         Row(
           children: [
             Expanded(
@@ -1237,66 +1894,116 @@ Widget _buildSettingsDrawer() {
   }
 
   Widget _buildPrimaryButton() {
-    return ElevatedButton(
-      onPressed: isCalculating ? null : _onCalculateSPL,
-      style: ElevatedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(12),
+    return Container(
+      height: _buttonHeight,
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: [
+            const Color(0xFF6A11CB),
+            const Color(0xFF2575FC),
+        ],
+          begin: Alignment.centerLeft,
+          end: Alignment.centerRight,
         ),
-        minimumSize: Size(double.infinity, _buttonHeight),
+        borderRadius: BorderRadius.circular(16),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFF6A11CB).withOpacity(0.3),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
+          ),
+        ],
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: isCalculating
-            ? [
-                SizedBox(
-                  width: 16,
-                  height: 16,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    valueColor: AlwaysStoppedAnimation(Colors.white),
+      child: ElevatedButton(
+        onPressed: isCalculating ? null : _onCalculateSPL,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: Colors.transparent,
+          shadowColor: Colors.transparent,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          padding: EdgeInsets.zero,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: isCalculating
+              ? [
+                  SizedBox(
+                    width: 20,
+                    height: 20,
+                    child: CircularProgressIndicator(
+                      strokeWidth: 2,
+                      valueColor: AlwaysStoppedAnimation(Colors.white),
+                    ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                const Text(
-                  'SOLVING...',
-                  style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
-                ),
-              ]
-            : [
-                Icon(Icons.calculate, size: 18),
-                const SizedBox(width: 8),
-                const Text(
-                  'SOLVE SYSTEM',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w700,
-                    fontSize: 13,
+                  const SizedBox(width: 12),
+                  const Text(
+                    'SOLVING...',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: Colors.white,
+                    ),
                   ),
-                ),
-              ],
+                ]
+              : [
+                  const Icon(Icons.calculate_rounded, color: Colors.white, size: 20),
+                  const SizedBox(width: 10),
+                  const Text(
+                    'SOLVE SYSTEM',
+                    style: TextStyle(
+                      fontWeight: FontWeight.w700,
+                      fontSize: 15,
+                      color: Colors.white,
+                    ),
+                  ),
+                ],
+        ),
       ),
     );
   }
 
   Widget _buildSecondaryButton() {
-    return OutlinedButton(
-      onPressed: _clearAll,
-      style: OutlinedButton.styleFrom(
-        padding: const EdgeInsets.symmetric(vertical: 14),
-        side: BorderSide(color: Colors.grey.shade300, width: 1.5),
-        minimumSize: Size(0, _buttonHeight),
-      ),
-      child: const Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(Icons.clear, size: 16),
-          SizedBox(width: 6),
-          Text(
-            'CLEAR',
-            style: TextStyle(fontWeight: FontWeight.w600, fontSize: 12),
+    return Container(
+      height: _buttonHeight,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(16),
+        border: Border.all(
+          color: const Color(0xFFE2E8F0),
+          width: 1.5,
+        ),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withOpacity(0.02),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
           ),
         ],
+      ),
+      child: OutlinedButton(
+        onPressed: _clearAll,
+        style: OutlinedButton.styleFrom(
+          backgroundColor: Colors.white,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(16),
+          ),
+          side: BorderSide.none,
+        ),
+        child: const Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.clear_all_rounded, color: Color(0xFF64748B), size: 20),
+            SizedBox(width: 8),
+            Text(
+              'CLEAR MATRIX',
+              style: TextStyle(
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+                color: Color(0xFF64748B),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
@@ -1306,140 +2013,160 @@ Widget _buildSettingsDrawer() {
 
     return FadeTransition(
       opacity: _fadeAnimation,
-      child: Card(
-        elevation: 4,
+      child: Container(
         margin: EdgeInsets.symmetric(horizontal: _cardMargin, vertical: 8),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          children: [
-            // Header
-            Container(
-              padding: const EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                gradient: LinearGradient(
-                  colors: [
-                    const Color(0xFF11998e),
-                    const Color(0xFF38ef7d),
-                ],
-                  begin: Alignment.centerLeft,
-                  end: Alignment.centerRight,
-                ),
-                borderRadius: const BorderRadius.vertical(
-                  top: Radius.circular(16),
-                ),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    padding: const EdgeInsets.all(8),
-                    decoration: BoxDecoration(
-                      // ignore: deprecated_member_use
-                      color: Colors.white.withOpacity(0.2),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Icons.analytics, color: Colors.white, size: 20),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        const Text(
-                          'SOLUTIONS',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 14,
-                            fontWeight: FontWeight.w700,
-                          ),
-                        ),
-                        const SizedBox(height: 2),
-                        Text(
-                          lastOperationLabel,
-                          style: TextStyle(
-                            // ignore: deprecated_member_use
-                            color: Colors.white.withOpacity(0.9),
-                            fontSize: 12,
-                          ),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ],
-                    ),
-                  ),
-                  if (solution.isNotEmpty)
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 10,
-                        vertical: 4,
-                      ),
-                      decoration: BoxDecoration(
-                        // ignore: deprecated_member_use
-                        // ignore: deprecated_member_use
-                        color: Colors.white.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(16),
-                      ),
-                      child: Text(
-                        lastOperationLabel,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ),
-                ],
-              ),
-            ),
-
-            // Tabs Content
-            DefaultTabController(
-              length: 3,
-              child: Column(
-                children: [
-                  SizedBox(
-                    height: 40,
-                    child: TabBar(
-                      labelColor: const Color(0xFF11998e),
-                      unselectedLabelColor: const Color(0xFF6B7280),
-                      indicatorColor: const Color(0xFF11998e),
-                      indicatorSize: TabBarIndicatorSize.tab,
-                      indicatorWeight: 3,
-                      labelStyle: const TextStyle(
-                        fontWeight: FontWeight.w700,
-                        fontSize: 11,
-                      ),
-                      unselectedLabelStyle: const TextStyle(
-                        fontWeight: FontWeight.w500,
-                        fontSize: 11,
-                      ),
-                      tabs: const [
-                        Tab(text: 'SOLUTION'),
-                        Tab(text: 'OPERATIONS'),
-                        Tab(text: 'ADVANCED'),
-                      ],
-                    ),
-                  ),
-                  SizedBox(
-                    height: 300,
-                    child: TabBarView(
-                      children: [
-                        // Tab 1: Solution
-                        _buildSolutionTab(),
-                        
-                        // Tab 2: Operations
-                        _buildOperationsTab(),
-                        
-                        // Tab 3: Advanced
-                        _buildAdvancedTab(),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(24),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.03),
+              blurRadius: 30,
+              spreadRadius: 2,
             ),
           ],
+        ),
+        child: Card(
+          elevation: 0,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(24),
+          ),
+          child: Column(
+            children: [
+              // Header
+              Container(
+                padding: const EdgeInsets.all(24),
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: [
+                      const Color(0xFF10B981),
+                      const Color(0xFF059669),
+                  ],
+                    begin: Alignment.centerLeft,
+                    end: Alignment.centerRight,
+                  ),
+                  borderRadius: const BorderRadius.vertical(
+                    top: Radius.circular(24),
+                  ),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      width: 56,
+                      height: 56,
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                      ),
+                      child: const Icon(Icons.analytics_rounded, color: Colors.white, size: 24),
+                    ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          const Text(
+                            'SOLUTIONS',
+                            style: TextStyle(
+                              color: Colors.white,
+                              fontSize: 16,
+                              fontWeight: FontWeight.w700,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            lastOperationLabel,
+                            style: TextStyle(
+                              color: Colors.white.withOpacity(0.9),
+                              fontSize: 13,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ],
+                      ),
+                    ),
+                    if (solution.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 8,
+                        ),
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          borderRadius: BorderRadius.circular(20),
+                          border: Border.all(color: Colors.white.withOpacity(0.3)),
+                        ),
+                        child: Text(
+                          '${solution.length} variables',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+
+              // Tabs Content
+              DefaultTabController(
+                length: 3,
+                child: Column(
+                  children: [
+                    Container(
+                      height: 48,
+                      decoration: const BoxDecoration(
+                        color: Colors.white,
+                        borderRadius: BorderRadius.vertical(
+                          top: Radius.circular(0),
+                        ),
+                      ),
+                      child: TabBar(
+                        labelColor: const Color(0xFF10B981),
+                        unselectedLabelColor: const Color(0xFF64748B),
+                        indicatorColor: const Color(0xFF10B981),
+                        indicatorSize: TabBarIndicatorSize.tab,
+                        indicatorWeight: 3,
+                        labelStyle: const TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 12,
+                          letterSpacing: 0.5,
+                        ),
+                        unselectedLabelStyle: const TextStyle(
+                          fontWeight: FontWeight.w500,
+                          fontSize: 12,
+                        ),
+                        indicatorPadding: const EdgeInsets.symmetric(horizontal: 8),
+                        tabs: const [
+                          Tab(text: 'SOLUTION'),
+                          Tab(text: 'OPERATIONS'),
+                          Tab(text: 'ADVANCED'),
+                        ],
+                      ),
+                    ),
+                    SizedBox(
+                      height: 320,
+                      child: TabBarView(
+                        children: [
+                          // Tab 1: Solution
+                          _buildSolutionTab(),
+                          
+                          // Tab 2: Operations
+                          _buildOperationsTab(),
+                          
+                          // Tab 3: Advanced
+                          _buildAdvancedTab(),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -1447,51 +2174,75 @@ Widget _buildSettingsDrawer() {
 
   Widget _buildSolutionTab() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'SYSTEM SOLUTION',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
+              color: Color(0xFF64748B),
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 16),
           
           if (solution.isEmpty)
             Container(
-              padding: const EdgeInsets.all(24),
+              padding: const EdgeInsets.all(32),
               decoration: BoxDecoration(
-                color: const Color(0xFFF9FAFB),
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: const Color(0xFFE5E7EB)),
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFFF8FAFC),
+                    const Color(0xFFF1F5F9),
+                ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
               ),
               child: Column(
                 children: [
-                  Icon(
-                    Icons.auto_awesome_mosaic,
-                    size: 48,
-                    color: Colors.grey.shade400,
+                  Container(
+                    width: 80,
+                    height: 80,
+                    decoration: BoxDecoration(
+                      color: Colors.white,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 2),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.05),
+                          blurRadius: 20,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: const Icon(
+                      Icons.auto_awesome_mosaic_rounded,
+                      size: 40,
+                      color: Color(0xFF94A3B8),
+                    ),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 16),
                   const Text(
                     'No Solution Calculated',
                     style: TextStyle(
-                      fontSize: 14,
-                      fontWeight: FontWeight.w600,
-                      color: Color(0xFF6B7280),
+                      fontSize: 16,
+                      fontWeight: FontWeight.w700,
+                      color: Color(0xFF475569),
                     ),
                   ),
-                  const SizedBox(height: 6),
+                  const SizedBox(height: 8),
                   Text(
                     'Click "Solve System" to find solution for Ax = b',
                     textAlign: TextAlign.center,
                     style: TextStyle(
-                      color: Colors.grey.shade500,
-                      fontSize: 11,
+                      color: const Color(0xFF94A3B8),
+                      fontSize: 13,
                     ),
                   ),
                 ],
@@ -1501,66 +2252,88 @@ Widget _buildSettingsDrawer() {
             Column(
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
-                        const Color(0xFFE3F2FD),
-                        const Color(0xFFF3E5F5),
+                        const Color(0xFFECFDF5),
+                        const Color(0xFFF0F9FF),
                     ],
                       begin: Alignment.topLeft,
                       end: Alignment.bottomRight,
                     ),
-                    borderRadius: BorderRadius.circular(12),
+                    borderRadius: BorderRadius.circular(20),
+                    border: Border.all(color: const Color(0xFFBAE6FD), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.03),
+                        blurRadius: 20,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: Column(
                     children: [
                       const Text(
                         'Solution Vector x:',
                         style: TextStyle(
-                          fontSize: 13,
+                          fontSize: 15,
                           fontWeight: FontWeight.w700,
-                          color: Color(0xFF374151),
+                          color: Color(0xFF1E293B),
                         ),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: 20),
                       Wrap(
-                        spacing: 8,
-                        runSpacing: 8,
+                        spacing: 12,
+                        runSpacing: 12,
                         alignment: WrapAlignment.center,
                         children: List.generate(solution.length, (i) {
                           return Container(
-                            width: 70,
-                            padding: const EdgeInsets.all(10),
+                            width: 100, // Increased from 90 for better visibility
+                            padding: const EdgeInsets.all(16),
                             decoration: BoxDecoration(
-                              color: Colors.white,
-                              borderRadius: BorderRadius.circular(10),
+                              gradient: LinearGradient(
+                                colors: [
+                                  Colors.white,
+                                  const Color(0xFFF8FAFC),
+                              ],
+                                begin: Alignment.topLeft,
+                                end: Alignment.bottomRight,
+                              ),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
                               boxShadow: [
                                 BoxShadow(
-                                  // ignore: deprecated_member_use
                                   color: Colors.black.withOpacity(0.05),
-                                  blurRadius: 4,
-                                  offset: const Offset(0, 2),
+                                  blurRadius: 15,
+                                  offset: const Offset(0, 5),
                                 ),
                               ],
                             ),
                             child: Column(
                               children: [
-                                Text(
-                                  'x${i + 1}',
-                                  style: TextStyle(
-                                    fontWeight: FontWeight.w800,
-                                    color: Theme.of(context).colorScheme.primary,
-                                    fontSize: 11,
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                  decoration: BoxDecoration(
+                                    color: const Color(0xFF6A11CB),
+                                    borderRadius: BorderRadius.circular(8),
+                                  ),
+                                  child: Text(
+                                    'x${i + 1}',
+                                    style: const TextStyle(
+                                      fontWeight: FontWeight.w800,
+                                      color: Colors.white,
+                                      fontSize: 12,
+                                    ),
                                   ),
                                 ),
-                                const SizedBox(height: 4),
+                                const SizedBox(height: 12),
                                 Text(
                                   solution[i].toStringAsFixed(precision),
                                   style: const TextStyle(
-                                    fontSize: 14,
+                                    fontSize: 18,
                                     fontWeight: FontWeight.w800,
-                                    color: Color(0xFF1F2937),
+                                    color: Color(0xFF1E293B),
                                     fontFamily: 'Monospace',
                                   ),
                                 ),
@@ -1572,29 +2345,86 @@ Widget _buildSettingsDrawer() {
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: 24),
                 
                 // Action Buttons
                 Row(
                   children: [
                     Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: _copySolutionCSV,
-                        icon: const Icon(Icons.copy, size: 16),
-                        label: const Text('Copy Values', style: TextStyle(fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFF6A11CB),
+                              const Color(0xFF2575FC),
+                          ],
+                            begin: Alignment.centerLeft,
+                            end: Alignment.centerRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12),
+                          boxShadow: [
+                            BoxShadow(
+                              color: const Color(0xFF6A11CB).withOpacity(0.3),
+                              blurRadius: 15,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: ElevatedButton.icon(
+                          onPressed: _copySolutionCSV,
+                          icon: const Icon(Icons.copy_all_rounded, size: 18, color: Colors.white),
+                          label: const Text(
+                            'Copy Values',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Colors.white,
+                            ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: Colors.transparent,
+                            shadowColor: Colors.transparent,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(width: 10),
+                    const SizedBox(width: 12),
                     Expanded(
-                      child: OutlinedButton.icon(
-                        onPressed: () => _showOBEViewer(0),
-                        icon: const Icon(Icons.visibility, size: 16),
-                        label: const Text('View Steps', style: TextStyle(fontSize: 13)),
-                        style: OutlinedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
+                      child: Container(
+                        height: 48,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.02),
+                              blurRadius: 10,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
+                        ),
+                        child: OutlinedButton.icon(
+                          onPressed: () => _showOBEViewer(0),
+                          icon: const Icon(Icons.visibility_rounded, size: 18, color: Color(0xFF475569)),
+                          label: const Text(
+                            'View Steps',
+                            style: TextStyle(
+                              fontSize: 14,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF475569),
+                            ),
+                          ),
+                          style: OutlinedButton.styleFrom(
+                            backgroundColor: Colors.white,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(12),
+                            ),
+                            side: BorderSide.none,
+                          ),
                         ),
                       ),
                     ),
@@ -1608,96 +2438,115 @@ Widget _buildSettingsDrawer() {
   }
 
   Widget _buildOperationsTab() {
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
     final bool isSquare = rows == cols;
     
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'MATRIX OPERATIONS',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: isSmallScreen ? 12 : 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 2),
+          SizedBox(height: isSmallScreen ? 2 : 4),
           Text(
             isSquare ? 'Square Matrix ($rows × $rows)' : 'Non-square Matrix',
             style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
+              fontSize: isSmallScreen ? 11 : 12,
+              color: const Color(0xFF94A3B8),
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 16),
+          SizedBox(height: isSmallScreen ? 16 : 24),
           
-          // Matrix Operations Grid
+          // Matrix Operations Grid - PERBAIKI LAYOUT
           GridView.count(
             shrinkWrap: true,
             physics: const NeverScrollableScrollPhysics(),
             crossAxisCount: 2,
-            mainAxisSpacing: 10,
-            crossAxisSpacing: 10,
-            childAspectRatio: 1.4,
-            padding: const EdgeInsets.symmetric(horizontal: 4),
+            mainAxisSpacing: isSmallScreen ? 12 : 16,
+            crossAxisSpacing: isSmallScreen ? 12 : 16,
+            childAspectRatio: 1.2, // PERBAIKI ASPECT RATIO
+            padding: EdgeInsets.zero,
             children: [
               _buildOperationCard(
                 title: 'Determinant',
-                icon: Icons.functions,
+                icon: Icons.functions_rounded,
                 color: const Color(0xFF10B981),
                 enabled: isSquare,
                 onTap: _onCalculateDet,
                 description: 'det(A)',
+                isSmallScreen: isSmallScreen,
               ),
               _buildOperationCard(
                 title: 'Inverse',
-                icon: Icons.swap_horiz,
+                icon: Icons.swap_horizontal_circle_rounded,
                 color: const Color(0xFF8B5CF6),
                 enabled: isSquare,
                 onTap: _onCalculateInverse,
                 description: 'A⁻¹',
+                isSmallScreen: isSmallScreen,
               ),
               _buildOperationCard(
                 title: 'Transpose',
-                icon: Icons.swap_vert,
+                icon: Icons.swap_vert_circle_rounded,
                 color: const Color(0xFFF59E0B),
                 enabled: true,
-                onTap: _onCalculateTranspose,
+                onTap: () => _onCalculateTranspose(),
                 description: 'Aᵀ',
+                isSmallScreen: isSmallScreen,
               ),
               _buildOperationCard(
                 title: 'Rank',
-                icon: Icons.stacked_line_chart,
+                icon: Icons.stacked_line_chart_rounded,
                 color: const Color(0xFFEF4444),
                 enabled: true,
                 onTap: _onCalculateRank,
                 description: 'rank(A)',
+                isSmallScreen: isSmallScreen,
               ),
             ],
           ),
           
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 12),
+          SizedBox(height: isSmallScreen ? 24 : 32),
+          Divider(
+            color: const Color(0xFFF1F5F9),
+            thickness: 1.5,
+            height: 1,
+          ),
+          SizedBox(height: isSmallScreen ? 16 : 24),
           
           // RREF Preview
-          const Text(
+          Text(
             'RREF PREVIEW',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: isSmallScreen ? 11 : 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
+              color: const Color(0xFF64748B),
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 8),
+          SizedBox(height: isSmallScreen ? 8 : 12),
           Container(
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+              borderRadius: BorderRadius.circular(12),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 12,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
-            padding: const EdgeInsets.all(10),
+            padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
             child: _buildRREFPreview(),
           ),
         ],
@@ -1709,52 +2558,54 @@ Widget _buildSettingsDrawer() {
     final bool isSquare = rows == cols;
     
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(24),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
             'ADVANCED METHODS',
             style: TextStyle(
-              fontSize: 12,
+              fontSize: 13,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
+              color: Color(0xFF64748B),
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 2),
+          const SizedBox(height: 4),
           Text(
             'Numerical methods for system solving',
             style: TextStyle(
-              fontSize: 11,
-              color: Colors.grey.shade600,
+              fontSize: 12,
+              color: const Color(0xFF94A3B8),
+              fontWeight: FontWeight.w500,
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 24),
           
           // Method Cards
           Column(
             children: [
               _buildMethodCard(
                 title: 'LU Decomposition',
-                icon: Icons.account_tree,
+                icon: Icons.account_tree_rounded,
                 color: const Color(0xFFEC4899),
                 enabled: isSquare,
                 onTap: _onShowLUSteps,
                 description: 'A = LU decomposition with pivot steps',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildMethodCard(
                 title: 'Gaussian Elimination',
-                icon: Icons.linear_scale,
+                icon: Icons.linear_scale_rounded,
                 color: const Color(0xFF3B82F6),
                 enabled: true,
                 onTap: () => _showOBEViewer(0),
                 description: 'Step-by-step elimination process',
               ),
-              const SizedBox(height: 12),
+              const SizedBox(height: 16),
               _buildMethodCard(
                 title: 'Matrix Multiplication',
-                icon: Icons.close,
+                icon: Icons.close_rounded,
                 color: const Color(0xFFF59E0B),
                 enabled: true,
                 onTap: _onMatrixMultiply,
@@ -1763,36 +2614,45 @@ Widget _buildSettingsDrawer() {
             ],
           ),
           
-          const SizedBox(height: 20),
-          const Divider(),
-          const SizedBox(height: 12),
+          const SizedBox(height: 32),
+          const Divider(color: Color(0xFFF1F5F9), thickness: 1.5),
+          const SizedBox(height: 24),
           
           // Matrix Properties
           const Text(
             'MATRIX PROPERTIES',
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 12,
               fontWeight: FontWeight.w700,
-              color: Color(0xFF6B7280),
+              color: Color(0xFF64748B),
+              letterSpacing: 0.5,
             ),
           ),
-          const SizedBox(height: 8),
-          Card(
-            elevation: 2,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+          const SizedBox(height: 12),
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.02),
+                  blurRadius: 20,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
             child: Padding(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(20),
               child: Column(
                 children: [
-                  _buildPropertyRow('Dimensions', '$rows × $cols'),
-                  const Divider(),
-                  _buildPropertyRow('Type', isSquare ? 'Square' : 'Rectangular'),
-                  const Divider(),
-                  _buildPropertyRow('Variables', '$cols variables'),
-                  const Divider(),
-                  _buildPropertyRow('Equations', '$rows equations'),
+                  _buildPropertyRow('Dimensions', '$rows × $cols', Icons.aspect_ratio_rounded),
+                  const Divider(color: Color(0xFFF1F5F9), thickness: 1.5, height: 24),
+                  _buildPropertyRow('Type', isSquare ? 'Square' : 'Rectangular', Icons.category_rounded),
+                  const Divider(color: Color(0xFFF1F5F9), thickness: 1.5, height: 24),
+                  _buildPropertyRow('Variables', '$cols variables', Icons.numbers_rounded),
+                  const Divider(color: Color(0xFFF1F5F9), thickness: 1.5, height: 24),
+                  _buildPropertyRow('Equations', '$rows equations', Icons.format_list_numbered_rounded),
                 ],
               ),
             ),
@@ -1809,57 +2669,93 @@ Widget _buildSettingsDrawer() {
     required bool enabled,
     required VoidCallback onTap,
     required String description,
+    required bool isSmallScreen,
   }) {
     return Material(
       borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
-      elevation: 1,
+      color: Colors.transparent,
+      elevation: 0,
       child: InkWell(
         borderRadius: BorderRadius.circular(12),
         onTap: enabled ? onTap : null,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
           decoration: BoxDecoration(
-            border: Border.all(
-              // ignore: deprecated_member_use
-              color: enabled ? color.withOpacity(0.3) : Colors.grey.shade200,
-            ),
+            color: enabled ? color.withOpacity(0.05) : const Color(0xFFF8FAFC),
             borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: enabled ? color.withOpacity(0.1) : const Color(0xFFF1F5F9),
+              width: 1.5,
+            ),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 12,
+                spreadRadius: 1,
+              ),
+            ],
           ),
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
               Container(
-                padding: const EdgeInsets.all(8),
+                width: isSmallScreen ? 44 : 56,
+                height: isSmallScreen ? 44 : 56,
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
+                  gradient: enabled
+                      ? LinearGradient(
+                          colors: [color, Color.lerp(color, Colors.black, 0.1)!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : LinearGradient(
+                          colors: [
+                            const Color(0xFFCBD5E1),
+                            const Color(0xFF94A3B8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
                   shape: BoxShape.circle,
+                  boxShadow: enabled ? [
+                    BoxShadow(
+                      color: enabled ? color.withOpacity(0.3) : Colors.transparent,
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ] : [],
                 ),
-                child: Icon(
-                  icon,
-                  color: enabled ? color : Colors.grey.shade400,
-                  size: 20,
+                child: Center(
+                  child: Icon(
+                    icon,
+                    color: enabled ? Colors.white : const Color(0xFFF8FAFC),
+                    size: isSmallScreen ? 20 : 24,
+                  ),
                 ),
               ),
-              const SizedBox(height: 8),
+              SizedBox(height: isSmallScreen ? 8 : 12),
               Text(
                 title,
                 style: TextStyle(
                   fontWeight: FontWeight.w700,
-                  color: enabled ? color : Colors.grey.shade400,
-                  fontSize: 12,
+                  color: enabled ? color : const Color(0xFF94A3B8),
+                  fontSize: isSmallScreen ? 12 : 14,
                 ),
                 textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
-              const SizedBox(height: 4),
+              SizedBox(height: 2),
               Text(
                 description,
                 textAlign: TextAlign.center,
                 style: TextStyle(
-                  fontSize: 10,
-                  color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
+                  fontSize: isSmallScreen ? 9 : 11,
+                  color: enabled ? color.withOpacity(0.7) : const Color(0xFFCBD5E1),
+                  fontWeight: FontWeight.w500,
                 ),
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
               ),
             ],
           ),
@@ -1877,37 +2773,66 @@ Widget _buildSettingsDrawer() {
     required String description,
   }) {
     return Material(
-      borderRadius: BorderRadius.circular(12),
-      color: Colors.white,
-      elevation: 1,
+      borderRadius: BorderRadius.circular(16),
+      color: Colors.transparent,
       child: InkWell(
-        borderRadius: BorderRadius.circular(12),
+        borderRadius: BorderRadius.circular(16),
         onTap: enabled ? onTap : null,
         child: Container(
-          padding: const EdgeInsets.all(12),
+          padding: const EdgeInsets.all(20),
           decoration: BoxDecoration(
+            color: enabled ? Colors.white : const Color(0xFFF8FAFC),
+            borderRadius: BorderRadius.circular(16),
             border: Border.all(
-              // ignore: deprecated_member_use
-              color: enabled ? color.withOpacity(0.2) : Colors.grey.shade200,
+              color: enabled ? color.withOpacity(0.1) : const Color(0xFFF1F5F9),
+              width: 1.5,
             ),
-            borderRadius: BorderRadius.circular(12),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 15,
+                spreadRadius: 1,
+              ),
+            ],
           ),
           child: Row(
             children: [
               Container(
-                padding: const EdgeInsets.all(10),
+                width: 56,
+                height: 56,
                 decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: enabled ? color.withOpacity(0.1) : Colors.grey.shade100,
-                  borderRadius: BorderRadius.circular(10),
+                  gradient: enabled
+                      ? LinearGradient(
+                          colors: [color, Color.lerp(color, Colors.black, 0.1)!],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        )
+                      : LinearGradient(
+                          colors: [
+                            const Color(0xFFCBD5E1),
+                            const Color(0xFF94A3B8),
+                          ],
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                        ),
+                  borderRadius: BorderRadius.circular(12),
+                  boxShadow: [
+                    BoxShadow(
+                      color: enabled ? color.withOpacity(0.2) : Colors.transparent,
+                      blurRadius: 8,
+                      offset: const Offset(0, 3),
+                    ),
+                  ],
                 ),
-                child: Icon(
-                  icon,
-                  color: enabled ? color : Colors.grey.shade400,
-                  size: 20,
+                child: Center(
+                  child: Icon(
+                    icon,
+                    color: enabled ? Colors.white : const Color(0xFFF8FAFC),
+                    size: 24,
+                  ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -1916,25 +2841,26 @@ Widget _buildSettingsDrawer() {
                       title,
                       style: TextStyle(
                         fontWeight: FontWeight.w700,
-                        color: enabled ? color : Colors.grey.shade400,
-                        fontSize: 14,
+                        color: enabled ? color : const Color(0xFF94A3B8),
+                        fontSize: 16,
                       ),
                     ),
-                    const SizedBox(height: 2),
+                    const SizedBox(height: 4),
                     Text(
                       description,
                       style: TextStyle(
-                        fontSize: 11,
-                        color: enabled ? Colors.grey.shade600 : Colors.grey.shade400,
+                        fontSize: 12,
+                        color: enabled ? const Color(0xFF64748B) : const Color(0xFFCBD5E1),
+                        fontWeight: FontWeight.w500,
                       ),
                     ),
                   ],
                 ),
               ),
               Icon(
-                Icons.chevron_right,
-                color: enabled ? color : Colors.grey.shade400,
-                size: 20,
+                Icons.chevron_right_rounded,
+                color: enabled ? color : const Color(0xFFCBD5E1),
+                size: 24,
               ),
             ],
           ),
@@ -1943,24 +2869,34 @@ Widget _buildSettingsDrawer() {
     );
   }
 
-  Widget _buildPropertyRow(String label, String value) {
+  Widget _buildPropertyRow(String label, String value, IconData icon) {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(
-          label,
-          style: const TextStyle(
-            color: Color(0xFF6B7280),
-            fontWeight: FontWeight.w500,
-            fontSize: 12,
-          ),
+        Row(
+          children: [
+            Icon(
+              icon,
+              color: const Color(0xFF64748B),
+              size: 18,
+            ),
+            const SizedBox(width: 12),
+            Text(
+              label,
+              style: const TextStyle(
+                color: Color(0xFF64748B),
+                fontWeight: FontWeight.w600,
+                fontSize: 14,
+              ),
+            ),
+          ],
         ),
         Text(
           value,
           style: const TextStyle(
-            color: Color(0xFF111827),
+            color: Color(0xFF1E293B),
             fontWeight: FontWeight.w700,
-            fontSize: 12,
+            fontSize: 14,
           ),
         ),
       ],
@@ -1971,7 +2907,7 @@ Widget _buildSettingsDrawer() {
     final aug = _readAugmentedMatrix();
     if (aug.isEmpty) return const SizedBox();
     
-    final cellWidth = 55.0;
+    final cellWidth = 60.0;
     
     return SingleChildScrollView(
       scrollDirection: Axis.horizontal,
@@ -1981,14 +2917,21 @@ Widget _buildSettingsDrawer() {
             Row(
               children: [
                 Container(
-                  width: 35,
-                  padding: const EdgeInsets.symmetric(vertical: 6),
-                  child: Text(
-                    'R${i+1}',
-                    style: const TextStyle(
-                      fontWeight: FontWeight.w700,
-                      color: Color(0xFF6B7280),
-                      fontSize: 10,
+                  width: 48,
+                  padding: const EdgeInsets.symmetric(vertical: 8),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF6A11CB),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Text(
+                      'R${i+1}',
+                      style: const TextStyle(
+                        fontWeight: FontWeight.w700,
+                        color: Colors.white,
+                        fontSize: 10,
+                      ),
                     ),
                   ),
                 ),
@@ -1996,20 +2939,33 @@ Widget _buildSettingsDrawer() {
                   final isLast = j == aug[i].length - 1;
                   return Container(
                     width: cellWidth,
-                    padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
+                    padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
                     decoration: BoxDecoration(
-                      color: isLast ? Colors.red.shade50 : Colors.white,
+                      gradient: isLast
+                          ? LinearGradient(
+                              colors: [
+                                Colors.red.shade50,
+                                Colors.red.shade100,
+                            ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            )
+                          : LinearGradient(
+                              colors: [Colors.white, const Color(0xFFF8FAFC)],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
                       border: Border.all(
-                        color: isLast ? Colors.red.shade100 : const Color(0xFFE5E7EB),
+                        color: isLast ? Colors.red.shade200 : const Color(0xFFE2E8F0),
                       ),
                     ),
                     child: Text(
                       aug[i][j].toStringAsFixed(precision),
                       textAlign: TextAlign.center,
                       style: TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                        color: isLast ? Colors.red.shade700 : const Color(0xFF374151),
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
+                        color: isLast ? Colors.red.shade700 : const Color(0xFF334155),
                         fontFamily: 'Monospace',
                       ),
                     ),
@@ -2028,23 +2984,21 @@ Widget _buildSettingsDrawer() {
     required Color color,
   }) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
       decoration: BoxDecoration(
-        // ignore: deprecated_member_use
         color: color.withOpacity(0.1),
-        borderRadius: BorderRadius.circular(12),
-        // ignore: deprecated_member_use
-        border: Border.all(color: color.withOpacity(0.3)),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: color.withOpacity(0.2), width: 1),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(icon, size: 10, color: color),
-          const SizedBox(width: 3),
+          Icon(icon, size: 12, color: color),
+          const SizedBox(width: 6),
           Text(
             label,
             style: TextStyle(
-              fontSize: 10,
+              fontSize: 12,
               fontWeight: FontWeight.w600,
               color: color,
             ),
@@ -2066,51 +3020,100 @@ Widget _buildSettingsDrawer() {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  // ignore: deprecated_member_use
-                  color: iconColor.withOpacity(0.1),
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(icon, size: 30, color: iconColor),
-              ),
-              const SizedBox(height: 12),
-              Text(
-                title,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-              const SizedBox(height: 16),
-              content,
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  style: ElevatedButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(vertical: 14),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                const Color(0xFFF8FAFC),
+            ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [
+                        iconColor,
+                        Color.lerp(iconColor, Colors.black, 0.1)!,
+                    ],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: iconColor.withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: Center(
+                    child: Icon(
+                      icon,
+                      size: 28,
+                      color: Colors.white,
                     ),
                   ),
-                  child: const Text(
-                    'CLOSE',
-                    style: TextStyle(fontWeight: FontWeight.w700, fontSize: 13),
+                ),
+                const SizedBox(height: 20),
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: -0.5,
                   ),
                 ),
-              ),
-            ],
+                const SizedBox(height: 20),
+                content,
+                const SizedBox(height: 24),
+                Container(
+                  width: double.infinity,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'CLOSE',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 14,
+                        color: Color(0xFF475569),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -2132,20 +3135,20 @@ Widget _buildSettingsDrawer() {
   }
 
   IconData _getStatusIcon() {
-    if (isCalculating) return Icons.hourglass_top;
-    if (solution.isEmpty) return Icons.info_outline;
-    if (lastOperationLabel.contains('Unique')) return Icons.check_circle;
-    if (lastOperationLabel.contains('Parametric')) return Icons.warning;
-    return Icons.info_outline;
+    if (isCalculating) return Icons.hourglass_top_rounded;
+    if (solution.isEmpty) return Icons.info_outline_rounded;
+    if (lastOperationLabel.contains('Unique')) return Icons.check_circle_rounded;
+    if (lastOperationLabel.contains('Parametric')) return Icons.warning_rounded;
+    return Icons.info_outline_rounded;
   }
 
   Color _getStatusColor() {
     if (isCalculating) return const Color(0xFFF59E0B);
-    if (solution.isEmpty) return const Color(0xFF6B7280);
+    if (solution.isEmpty) return const Color(0xFF64748B);
     if (lastOperationLabel.contains('Unique')) return const Color(0xFF10B981);
     if (lastOperationLabel.contains('Parametric')) return const Color(0xFFF59E0B);
     if (lastOperationLabel.contains('Inconsistent')) return const Color(0xFFEF4444);
-    return const Color(0xFF6B7280);
+    return const Color(0xFF64748B);
   }
 
   void _showError(String message) {
@@ -2153,16 +3156,30 @@ Widget _buildSettingsDrawer() {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.error_outline, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.error_outline_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
           ],
         ),
         backgroundColor: const Color(0xFFEF4444),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         duration: const Duration(seconds: 3),
       ),
     );
@@ -2173,16 +3190,30 @@ Widget _buildSettingsDrawer() {
       SnackBar(
         content: Row(
           children: [
-            const Icon(Icons.check_circle, color: Colors.white, size: 20),
-            const SizedBox(width: 10),
-            Expanded(child: Text(message, style: const TextStyle(fontSize: 13))),
+            Container(
+              width: 32,
+              height: 32,
+              decoration: BoxDecoration(
+                color: Colors.white.withOpacity(0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(Icons.check_circle_rounded, color: Colors.white, size: 18),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                message,
+                style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+              ),
+            ),
           ],
         ),
         backgroundColor: const Color(0xFF10B981),
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
+          borderRadius: BorderRadius.circular(12),
         ),
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         duration: const Duration(seconds: 2),
       ),
     );
@@ -2210,7 +3241,7 @@ Widget _buildSettingsDrawer() {
     
     _showResultDialog(
       title: 'Matrix Transpose',
-      icon: Icons.swap_vert,
+      icon: Icons.swap_vert_circle_rounded,
       iconColor: const Color(0xFFF59E0B),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2219,39 +3250,54 @@ Widget _buildSettingsDrawer() {
             'Aᵀ =',
             style: TextStyle(
               fontWeight: FontWeight.w700,
-              fontSize: 16,
-              color: Color(0xFF374151),
+              fontSize: 22,
+              color: Color(0xFF1E293B),
+              letterSpacing: -0.5,
             ),
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: 20),
           Container(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              border: Border.all(color: const Color(0xFFE5E7EB)),
-              borderRadius: BorderRadius.circular(10),
+              border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+              borderRadius: BorderRadius.circular(16),
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withOpacity(0.03),
+                  blurRadius: 20,
+                  spreadRadius: 1,
+                ),
+              ],
             ),
             child: SingleChildScrollView(
               scrollDirection: Axis.horizontal,
               child: Column(
                 children: transposed.map((row) {
                   return Padding(
-                    padding: const EdgeInsets.only(bottom: 8),
+                    padding: const EdgeInsets.only(bottom: 12),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: row.map((val) {
                         return Container(
-                          width: 60,
-                          padding: const EdgeInsets.symmetric(vertical: 6, horizontal: 3),
-                          margin: const EdgeInsets.symmetric(horizontal: 2),
+                          width: 70,
+                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                          margin: const EdgeInsets.symmetric(horizontal: 4),
                           decoration: BoxDecoration(
-                            color: Colors.white,
-                            borderRadius: BorderRadius.circular(6),
+                            gradient: LinearGradient(
+                              colors: [
+                                Colors.white,
+                                const Color(0xFFF8FAFC),
+                            ],
+                              begin: Alignment.topLeft,
+                              end: Alignment.bottomRight,
+                            ),
+                            borderRadius: BorderRadius.circular(12),
+                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1),
                             boxShadow: [
                               BoxShadow(
-                                // ignore: deprecated_member_use
                                 color: Colors.black.withOpacity(0.05),
-                                blurRadius: 3,
-                                offset: const Offset(0, 2),
+                                blurRadius: 10,
+                                offset: const Offset(0, 3),
                               ),
                             ],
                           ),
@@ -2259,8 +3305,9 @@ Widget _buildSettingsDrawer() {
                             val.toStringAsFixed(precision),
                             textAlign: TextAlign.center,
                             style: const TextStyle(
-                              fontSize: 11,
-                              fontWeight: FontWeight.w500,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w600,
+                              color: Color(0xFF334155),
                             ),
                           ),
                         );
@@ -2282,7 +3329,7 @@ Widget _buildSettingsDrawer() {
 
     _showResultDialog(
       title: 'Matrix Rank',
-      icon: Icons.stacked_line_chart,
+      icon: Icons.stacked_line_chart_rounded,
       iconColor: const Color(0xFFEF4444),
       content: Column(
         mainAxisSize: MainAxisSize.min,
@@ -2290,20 +3337,39 @@ Widget _buildSettingsDrawer() {
           const Text(
             'rank(A) =',
             style: TextStyle(
-              fontSize: 14,
+              fontSize: 16,
               color: Colors.grey,
-            ),
-          ),
-          const SizedBox(height: 12),
-          Text(
-            '$rank',
-            style: const TextStyle(
-              fontSize: 28,
-              fontWeight: FontWeight.w800,
-              color: Color(0xFF1F2937),
+              fontWeight: FontWeight.w500,
             ),
           ),
           const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 40),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [
+                  const Color(0xFFFEF2F2),
+                  const Color(0xFFFEE2E2),
+              ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(20),
+              border: Border.all(
+                color: const Color(0xFFFECACA),
+                width: 1.5,
+              ),
+            ),
+            child: Text(
+              '$rank',
+              style: const TextStyle(
+                fontSize: 32,
+                fontWeight: FontWeight.w800,
+                color: Color(0xFFDC2626),
+              ),
+            ),
+          ),
+          const SizedBox(height: 20),
           Text(
             rank == min(rows, cols) 
                 ? 'Matrix has full rank'
@@ -2313,7 +3379,18 @@ Widget _buildSettingsDrawer() {
                   ? const Color(0xFF10B981)
                   : const Color(0xFFF59E0B),
               fontWeight: FontWeight.w600,
-              fontSize: 13,
+              fontSize: 14,
+            ),
+          ),
+          const SizedBox(height: 8),
+          Text(
+            rank == min(rows, cols)
+                ? 'All rows/columns are linearly independent'
+                : 'Some rows/columns are linearly dependent',
+            textAlign: TextAlign.center,
+            style: TextStyle(
+              color: Colors.grey.shade600,
+              fontSize: 12,
             ),
           ),
         ],
@@ -2357,7 +3434,7 @@ Widget _buildSettingsDrawer() {
         context: context,
         builder: (ctx) => Dialog(
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(24),
           ),
           child: SizedBox(
             width: MediaQuery.of(context).size.width * 0.9,
@@ -2365,7 +3442,7 @@ Widget _buildSettingsDrawer() {
               mainAxisSize: MainAxisSize.min,
               children: [
                 Container(
-                  padding: const EdgeInsets.all(16),
+                  padding: const EdgeInsets.all(24),
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
                       colors: [
@@ -2376,26 +3453,36 @@ Widget _buildSettingsDrawer() {
                       end: Alignment.centerRight,
                     ),
                     borderRadius: const BorderRadius.vertical(
-                      top: Radius.circular(20),
+                      top: Radius.circular(24),
                     ),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.account_tree, color: Colors.white, size: 24),
-                      const SizedBox(width: 12),
+                      Container(
+                        width: 48,
+                        height: 48,
+                        decoration: BoxDecoration(
+                          color: Colors.white.withOpacity(0.2),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: Colors.white.withOpacity(0.3), width: 2),
+                        ),
+                        child: const Icon(Icons.account_tree_rounded, color: Colors.white, size: 24),
+                      ),
+                      const SizedBox(width: 16),
                       const Expanded(
                         child: Text(
                           'LU DECOMPOSITION',
                           style: TextStyle(
                             color: Colors.white,
-                            fontSize: 16,
+                            fontSize: 18,
                             fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
                         ),
                       ),
                       IconButton(
                         onPressed: () => Navigator.pop(ctx),
-                        icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                        icon: const Icon(Icons.close_rounded, color: Colors.white, size: 24),
                       ),
                     ],
                   ),
@@ -2404,19 +3491,22 @@ Widget _buildSettingsDrawer() {
                   length: 4,
                   child: Column(
                     children: [
-                      SizedBox(
-                        height: 40,
+                      Container(
+                        height: 48,
+                        color: Colors.white,
                         child: TabBar(
                           labelColor: const Color(0xFFEC4899),
-                          unselectedLabelColor: const Color(0xFF6B7280),
+                          unselectedLabelColor: const Color(0xFF64748B),
                           indicatorColor: const Color(0xFFEC4899),
                           indicatorWeight: 3,
+                          indicatorSize: TabBarIndicatorSize.tab,
                           labelStyle: const TextStyle(
-                            fontSize: 11,
-                            fontWeight: FontWeight.w600,
+                            fontSize: 12,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
                           ),
                           unselectedLabelStyle: const TextStyle(
-                            fontSize: 11,
+                            fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
                           tabs: const [
@@ -2428,7 +3518,7 @@ Widget _buildSettingsDrawer() {
                         ),
                       ),
                       SizedBox(
-                        height: 300,
+                        height: 320,
                         child: TabBarView(
                           children: [
                             _buildStepsListView(decompSteps),
@@ -2453,45 +3543,58 @@ Widget _buildSettingsDrawer() {
 
   Widget _buildStepsListView(List<String> steps) {
     return ListView.builder(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(16),
       itemCount: steps.length,
       itemBuilder: (context, index) {
-        return Card(
-          elevation: 1,
-          margin: const EdgeInsets.only(bottom: 8),
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(10),
+        return Container(
+          margin: const EdgeInsets.only(bottom: 12),
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(16),
+            border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.black.withOpacity(0.02),
+                blurRadius: 10,
+                offset: const Offset(0, 4),
+              ),
+            ],
           ),
           child: Padding(
-            padding: const EdgeInsets.all(12),
+            padding: const EdgeInsets.all(16),
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Container(
-                  width: 22,
-                  height: 22,
+                  width: 32,
+                  height: 32,
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(11),
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFFEC4899), Color(0xFF8B5CF6)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(8),
                   ),
                   child: Center(
                     child: Text(
                       '${index + 1}',
                       style: const TextStyle(
-                        fontSize: 10,
-                        fontWeight: FontWeight.w700,
-                        color: Color(0xFF6B7280),
+                        fontSize: 14,
+                        fontWeight: FontWeight.w800,
+                        color: Colors.white,
                       ),
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 16),
                 Expanded(
                   child: SelectableText(
                     steps[index],
                     style: const TextStyle(
-                      fontSize: 11,
-                      color: Color(0xFF374151),
+                      fontSize: 12,
+                      color: Color(0xFF334155),
+                      height: 1.6,
                     ),
                   ),
                 ),
@@ -2504,84 +3607,131 @@ Widget _buildSettingsDrawer() {
   }
 
   Widget _buildSolutionView(List<double>? sol) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
+    
     return Padding(
-      padding: const EdgeInsets.all(16),
+      padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
       child: sol == null
-          ? const Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(
-                    Icons.error_outline,
-                    size: 40,
-                    color: Colors.grey,
+          ? Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Container(
+                  width: 60, // PERKECIL DARI 80
+                  height: 60, // PERKECIL DARI 80
+                  decoration: BoxDecoration(
+                    color: const Color(0xFFFEF2F2),
+                    shape: BoxShape.circle,
+                    border: Border.all(color: const Color(0xFFFECACA), width: 2),
                   ),
-                  SizedBox(height: 12),
+                  child: const Icon(
+                    Icons.error_outline_rounded,
+                    size: 30, // PERKECIL DARI 40
+                    color: Color(0xFFDC2626),
+                  ),
+                ),
+                const SizedBox(height: 16), // PERKECIL DARI 20
+                Text(
+                  'No solution found',
+                  style: TextStyle(
+                    color: const Color(0xFFDC2626),
+                    fontSize: isSmallScreen ? 16 : 18, // PERKECIL
+                    fontWeight: FontWeight.w700,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  'Matrix may be singular or inconsistent',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: const Color(0xFF64748B),
+                    fontSize: isSmallScreen ? 12 : 14, // PERKECIL
+                  ),
+                ),
+              ],
+            )
+          : SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Text(
-                    'No solution found',
+                    'Solution:',
                     style: TextStyle(
-                      color: Colors.grey,
-                      fontSize: 14,
+                      fontSize: isSmallScreen ? 16 : 18, // PERKECIL
+                      fontWeight: FontWeight.w700,
+                      color: const Color(0xFF1E293B),
                     ),
+                  ),
+                  const SizedBox(height: 16),
+                  Wrap(
+                    spacing: isSmallScreen ? 8 : 12, // PERKECIL SPACING
+                    runSpacing: isSmallScreen ? 8 : 12,
+                    children: List.generate(sol.length, (i) {
+                      return Container(
+                        width: isSmallScreen ? 90 : 100, // PERKECIL DARI 120
+                        padding: EdgeInsets.all(isSmallScreen ? 12 : 16), // PERKECIL
+                        decoration: BoxDecoration(
+                          gradient: LinearGradient(
+                            colors: [
+                              const Color(0xFFFDF4FF),
+                              const Color(0xFFFAE8FF),
+                          ],
+                            begin: Alignment.topLeft,
+                            end: Alignment.bottomRight,
+                          ),
+                          borderRadius: BorderRadius.circular(12), // PERKECIL RADIUS
+                          border: Border.all(color: const Color(0xFFF5D0FE), width: 1.5),
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.03),
+                              blurRadius: 10, // PERKECIL BLUR
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Container(
+                              padding: EdgeInsets.symmetric(
+                                horizontal: isSmallScreen ? 8 : 10,
+                                vertical: isSmallScreen ? 4 : 5,
+                              ),
+                              decoration: BoxDecoration(
+                                gradient: LinearGradient(
+                                  colors: [
+                                    const Color(0xFFEC4899),
+                                    const Color(0xFF8B5CF6),
+                                ],
+                                  begin: Alignment.centerLeft,
+                                  end: Alignment.centerRight,
+                                ),
+                                borderRadius: BorderRadius.circular(16), // PERKECIL
+                              ),
+                              child: Text(
+                                'x${i + 1}',
+                                style: TextStyle(
+                                  fontWeight: FontWeight.w800,
+                                  color: Colors.white,
+                                  fontSize: isSmallScreen ? 12 : 14, // PERKECIL
+                                ),
+                              ),
+                            ),
+                            SizedBox(height: isSmallScreen ? 6 : 8),
+                            Text(
+                              sol[i].toStringAsFixed(precision),
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 16 : 18, // PERKECIL
+                                fontWeight: FontWeight.w800,
+                                color: const Color(0xFF1E293B),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                    }),
                   ),
                 ],
               ),
-            )
-          : Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Text(
-                  'Solution:',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.w700,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                Wrap(
-                  spacing: 12,
-                  runSpacing: 12,
-                  children: List.generate(sol.length, (i) {
-                    return Container(
-                      width: 100,
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: [
-                            // ignore: deprecated_member_use
-                            const Color(0xFFEC4899).withOpacity(0.1),
-                            // ignore: deprecated_member_use
-                            const Color(0xFF8B5CF6).withOpacity(0.1),
-                          ],
-                        ),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Column(
-                        children: [
-                          Text(
-                            'x${i + 1}',
-                            style: TextStyle(
-                              fontWeight: FontWeight.w700,
-                              color: const Color(0xFFEC4899),
-                              fontSize: 12,
-                            ),
-                          ),
-                          const SizedBox(height: 6),
-                          Text(
-                            sol[i].toStringAsFixed(precision),
-                            style: const TextStyle(
-                              fontSize: 16,
-                              fontWeight: FontWeight.w800,
-                              color: Color(0xFF1F2937),
-                            ),
-                          ),
-                        ],
-                      ),
-                    );
-                  }),
-                ),
-              ],
             ),
     );
   }
@@ -2593,10 +3743,17 @@ Widget _buildSettingsDrawer() {
   void _showInfo(String message) {
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text(message, style: const TextStyle(fontSize: 13)),
+        content: Text(
+          message,
+          style: const TextStyle(fontSize: 14, fontWeight: FontWeight.w500),
+        ),
         backgroundColor: const Color(0xFF3B82F6),
         behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(12),
+        ),
         duration: const Duration(seconds: 2),
+        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 14),
       ),
     );
   }
@@ -2606,49 +3763,138 @@ Widget _buildSettingsDrawer() {
       context: context,
       builder: (ctx) => Dialog(
         shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(20),
+          borderRadius: BorderRadius.circular(24),
         ),
-        child: Padding(
-          padding: const EdgeInsets.all(20),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Icon(
-                Icons.help_outline,
-                size: 50,
-                color: Color(0xFF6A11CB),
-              ),
-              const SizedBox(height: 16),
-              const Text(
-                'Matrix Solver Help',
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.w800,
-                  color: Color(0xFF1F2937),
-                ),
-              ),
-              const SizedBox(height: 12),
-              const Text(
-                '1. Enter your matrix A and vector b\n'
-                '2. Adjust dimensions as needed\n'
-                '3. Click "Solve System" for solution\n'
-                '4. Use operations tab for matrix analysis\n'
-                '5. View step-by-step solutions',
-                style: TextStyle(
-                  fontSize: 12,
-                  color: Color(0xFF6B7280),
-                  height: 1.6,
-                ),
-              ),
-              const SizedBox(height: 20),
-              SizedBox(
-                width: double.infinity,
-                child: ElevatedButton(
-                  onPressed: () => Navigator.pop(ctx),
-                  child: const Text('GOT IT', style: TextStyle(fontSize: 13)),
-                ),
-              ),
+        child: Container(
+          decoration: BoxDecoration(
+            borderRadius: BorderRadius.circular(24),
+            gradient: LinearGradient(
+              colors: [
+                Colors.white,
+                const Color(0xFFF8FAFC),
             ],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(24),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Container(
+                  width: 64,
+                  height: 64,
+                  decoration: BoxDecoration(
+                    gradient: const LinearGradient(
+                      colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    shape: BoxShape.circle,
+                    boxShadow: [
+                      BoxShadow(
+                        color: const Color(0xFF6A11CB).withOpacity(0.3),
+                        blurRadius: 15,
+                        spreadRadius: 2,
+                      ),
+                    ],
+                  ),
+                  child: const Center(
+                    child: Icon(
+                      Icons.help_outline_rounded,
+                      size: 32,
+                      color: Colors.white,
+                    ),
+                  ),
+                ),
+                const SizedBox(height: 20),
+                const Text(
+                  'Matrix Solver Help',
+                  style: TextStyle(
+                    fontSize: 24,
+                    fontWeight: FontWeight.w800,
+                    color: Color(0xFF1E293B),
+                    letterSpacing: -0.5,
+                  ),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  'How to use the app',
+                  style: TextStyle(
+                    color: const Color(0xFF64748B),
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: const [
+                    _HelpItem(
+                      number: '1',
+                      title: 'Enter your matrix',
+                      description: 'Input matrix A and vector b for Ax = b system',
+                    ),
+                    SizedBox(height: 16),
+                    _HelpItem(
+                      number: '2',
+                      title: 'Adjust dimensions',
+                      description: 'Use + and - buttons to change matrix size',
+                    ),
+                    SizedBox(height: 16),
+                    _HelpItem(
+                      number: '3',
+                      title: 'Solve system',
+                      description: 'Click "Solve System" to get solution',
+                    ),
+                    SizedBox(height: 16),
+                    _HelpItem(
+                      number: '4',
+                      title: 'View operations',
+                      description: 'Check step-by-step solutions in tabs',
+                    ),
+                    SizedBox(height: 16),
+                    _HelpItem(
+                      number: '5',
+                      title: 'Advanced features',
+                      description: 'Use operations tab for matrix analysis',
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 32),
+                Container(
+                  width: double.infinity,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    borderRadius: BorderRadius.circular(12),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.05),
+                        blurRadius: 10,
+                        offset: const Offset(0, 4),
+                      ),
+                    ],
+                  ),
+                  child: ElevatedButton(
+                    onPressed: () => Navigator.pop(ctx),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF6A11CB),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    child: const Text(
+                      'GOT IT',
+                      style: TextStyle(
+                        fontWeight: FontWeight.w700,
+                        fontSize: 15,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
           ),
         ),
       ),
@@ -2663,6 +3909,8 @@ Widget _buildSettingsDrawer() {
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
+    
     return MediaQuery(
       data: MediaQuery.of(context).copyWith(
         textScaler: TextScaler.linear(_displayScale),
@@ -2671,47 +3919,125 @@ Widget _buildSettingsDrawer() {
         key: _scaffoldKey,
         appBar: _buildAppBar(),
         endDrawer: _buildSettingsDrawer(),
-        backgroundColor: const Color(0xFFF8F9FA),
+        backgroundColor: const Color(0xFFF8FAFC),
         body: SafeArea(
           child: SingleChildScrollView(
-            padding: EdgeInsets.symmetric(horizontal: _contentPadding),
+            padding: EdgeInsets.symmetric(
+              horizontal: isSmallScreen ? 12 : _contentPadding,
+            ),
             child: Column(
               children: [
-                const SizedBox(height: 8),
+                SizedBox(height: isSmallScreen ? 8 : 12),
                 _buildMatrixInputCard(),
                 _buildSolutionCard(),
-                const SizedBox(height: 12),
+                SizedBox(height: isSmallScreen ? 12 : 16),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: EdgeInsets.all(isSmallScreen ? 16 : 20),
                   decoration: BoxDecoration(
-                    color: const Color(0xFFF3F4F6),
-                    borderRadius: BorderRadius.circular(10),
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(16),
+                    border: Border.all(color: const Color(0xFFF1F5F9), width: 1.5),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.black.withOpacity(0.02),
+                        blurRadius: 20,
+                        spreadRadius: 1,
+                      ),
+                    ],
                   ),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
                       Icon(
-                        Icons.code,
-                        size: 12,
-                        color: const Color(0xFF757575),
+                        Icons.code_rounded,
+                        size: isSmallScreen ? 12 : 14,
+                        color: const Color(0xFF64748B),
                       ),
-                      const SizedBox(width: 6),
+                      SizedBox(width: isSmallScreen ? 6 : 8),
                       Text(
-                        'Matrix Solver Pro • v1.0 • Precision: $precision',
+                        'Matrix Solver Pro • v1.0',
                         style: TextStyle(
-                          color: Colors.grey.shade600,
-                          fontSize: 10,
+                          color: const Color(0xFF64748B).withOpacity(0.8),
+                          fontSize: isSmallScreen ? 11 : 12,
+                          fontWeight: FontWeight.w500,
                         ),
                       ),
                     ],
                   ),
                 ),
-                const SizedBox(height: 16),
+                SizedBox(height: isSmallScreen ? 16 : 20),
               ],
             ),
           ),
         ),
       ),
+    );
+  }
+}
+
+class _HelpItem extends StatelessWidget {
+  final String number;
+  final String title;
+  final String description;
+
+  const _HelpItem({
+    required this.number,
+    required this.title,
+    required this.description,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            gradient: const LinearGradient(
+              colors: [Color(0xFF6A11CB), Color(0xFF2575FC)],
+              begin: Alignment.topLeft,
+              end: Alignment.bottomRight,
+            ),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Center(
+            child: Text(
+              number,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w800,
+                color: Colors.white,
+              ),
+            ),
+          ),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 15,
+                  fontWeight: FontWeight.w700,
+                  color: Color(0xFF1E293B),
+                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                description,
+                style: TextStyle(
+                  color: const Color(0xFF64748B),
+                  fontSize: 13,
+                ),
+              ),
+            ],
+          ),
+        ),
+      ],
     );
   }
 }
@@ -2745,176 +4071,297 @@ class __OBEViewerDialogState extends State<_OBEViewerDialog> {
 
   @override
   Widget build(BuildContext context) {
+    final isSmallScreen = MediaQuery.of(context).size.width < 400;
     final snapshot = widget.snapshots[currentIndex];
     final description = widget.descriptions[currentIndex];
     final totalSteps = widget.snapshots.length;
 
     return Dialog(
+      insetPadding: EdgeInsets.all(isSmallScreen ? 8 : 16), // TAMBAH INI
       shape: RoundedRectangleBorder(
         borderRadius: BorderRadius.circular(20),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(16),
-            decoration: BoxDecoration(
-              gradient: LinearGradient(
-                colors: [
-                  const Color(0xFF3B82F6),
-                  const Color(0xFF1D4ED8),
+      child: ConstrainedBox(
+        constraints: BoxConstraints(
+          maxWidth: isSmallScreen ? MediaQuery.of(context).size.width * 0.95 : 500,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header - PERKECIL
+            Container(
+              padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    const Color(0xFF3B82F6),
+                    const Color(0xFF1D4ED8),
+                  ],
+                  begin: Alignment.centerLeft,
+                  end: Alignment.centerRight,
+                ),
+                borderRadius: const BorderRadius.vertical(
+                  top: Radius.circular(20),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: isSmallScreen ? 40 : 48,
+                    height: isSmallScreen ? 40 : 48,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: Colors.white.withOpacity(0.3), width: 1.5),
+                    ),
+                    child: Icon(
+                      Icons.format_list_numbered_rounded,
+                      color: Colors.white,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                  ),
+                  SizedBox(width: isSmallScreen ? 12 : 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'STEP-BY-STEP',
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: isSmallScreen ? 14 : 18,
+                            fontWeight: FontWeight.w700,
+                            letterSpacing: 0.5,
+                          ),
+                        ),
+                        SizedBox(height: isSmallScreen ? 2 : 4),
+                        Text(
+                          'Step ${currentIndex + 1} of $totalSteps',
+                          style: TextStyle(
+                            color: Colors.white.withOpacity(0.9),
+                            fontSize: isSmallScreen ? 11 : 13,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(
+                      Icons.close_rounded,
+                      color: Colors.white,
+                      size: isSmallScreen ? 20 : 24,
+                    ),
+                  ),
                 ],
               ),
-              borderRadius: const BorderRadius.vertical(
-                top: Radius.circular(20),
-              ),
             ),
-            child: Row(
-              children: [
-                const Icon(Icons.format_list_numbered, color: Colors.white, size: 22),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
+            
+            // Content - PERKECIL
+            Padding(
+              padding: EdgeInsets.all(isSmallScreen ? 16 : 24),
+              child: Column(
+                children: [
+                  // Description - PERKECIL
+                  Container(
+                    width: double.infinity,
+                    padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                    decoration: BoxDecoration(
+                      gradient: LinearGradient(
+                        colors: [
+                          const Color(0xFFE0F2FE),
+                          const Color(0xFFBAE6FD),
+                      ],
+                        begin: Alignment.topLeft,
+                        end: Alignment.bottomRight,
+                      ),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: const Color(0xFF7DD3FC), width: 1.5),
+                    ),
+                    child: Text(
+                      description,
+                      style: TextStyle(
+                        color: const Color(0xFF0369A1),
+                        fontWeight: FontWeight.w600,
+                        fontSize: isSmallScreen ? 12 : 14,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isSmallScreen ? 16 : 24),
+                  
+                  // Matrix Display - PERKECIL
+                  Container(
+                    decoration: BoxDecoration(
+                      border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                      borderRadius: BorderRadius.circular(12),
+                      boxShadow: [
+                        BoxShadow(
+                          color: Colors.black.withOpacity(0.02),
+                          blurRadius: 10,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    padding: EdgeInsets.all(isSmallScreen ? 12 : 16),
+                    child: SingleChildScrollView(
+                      scrollDirection: Axis.horizontal,
+                      child: Column(
+                        children: snapshot.asMap().entries.map((entry) {
+                          final i = entry.key;
+                          final row = entry.value;
+                          return Padding(
+                            padding: EdgeInsets.only(bottom: i < snapshot.length - 1 ? 8 : 0),
+                            child: Row(
+                              children: row.asMap().entries.map((cell) {
+                                final isLast = cell.key == row.length - 1;
+                                return Container(
+                                  width: isSmallScreen ? 55 : 65, // PERKECIL
+                                  padding: EdgeInsets.symmetric(
+                                    vertical: isSmallScreen ? 8 : 10,
+                                  ),
+                                  decoration: BoxDecoration(
+                                    gradient: isLast
+                                        ? LinearGradient(
+                                            colors: [
+                                              Colors.red.shade50,
+                                              Colors.red.shade100,
+                                          ],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          )
+                                        : LinearGradient(
+                                            colors: [Colors.white, const Color(0xFFF8FAFC)],
+                                            begin: Alignment.topLeft,
+                                            end: Alignment.bottomRight,
+                                          ),
+                                    border: Border.all(
+                                      color: isLast 
+                                          ? Colors.red.shade200 
+                                          : const Color(0xFFE2E8F0),
+                                    ),
+                                  ),
+                                  child: Text(
+                                    cell.value.toStringAsFixed(widget.precision),
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      fontSize: isSmallScreen ? 10 : 12, // PERKECIL
+                                      fontWeight: FontWeight.w600,
+                                      color: isLast 
+                                          ? Colors.red.shade700 
+                                          : const Color(0xFF334155),
+                                    ),
+                                  ),
+                                );
+                              }).toList(),
+                            ),
+                          );
+                        }).toList(),
+                      ),
+                    ),
+                  ),
+                  SizedBox(height: isSmallScreen ? 16 : 24),
+                  
+                  // Navigation - PERKECIL
+                  Row(
                     children: [
-                      const Text(
-                        'STEP-BY-STEP',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.w700,
+                      Expanded(
+                        child: Container(
+                          height: isSmallScreen ? 42 : 48,
+                          decoration: BoxDecoration(
+                            borderRadius: BorderRadius.circular(10),
+                            border: Border.all(color: const Color(0xFFE2E8F0), width: 1.5),
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withOpacity(0.02),
+                                blurRadius: 8,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: currentIndex > 0
+                                ? () => setState(() => currentIndex--)
+                                : null,
+                            icon: Icon(
+                              Icons.navigate_before_rounded,
+                              size: isSmallScreen ? 18 : 20,
+                              color: const Color(0xFF475569),
+                            ),
+                            label: Text(
+                              'Previous',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 12 : 14,
+                                fontWeight: FontWeight.w600,
+                                color: const Color(0xFF475569),
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.white,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              side: BorderSide.none,
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 2),
-                      Text(
-                        'Step ${currentIndex + 1} of $totalSteps',
-                        style: const TextStyle(
-                          color: Colors.white70,
-                          fontSize: 11,
+                      SizedBox(width: isSmallScreen ? 12 : 16),
+                      Expanded(
+                        child: Container(
+                          height: isSmallScreen ? 42 : 48,
+                          decoration: BoxDecoration(
+                            gradient: LinearGradient(
+                              colors: [
+                                const Color(0xFF10B981),
+                                const Color(0xFF059669),
+                            ],
+                              begin: Alignment.centerLeft,
+                              end: Alignment.centerRight,
+                            ),
+                            borderRadius: BorderRadius.circular(10),
+                            boxShadow: [
+                              BoxShadow(
+                                color: const Color(0xFF10B981).withOpacity(0.3),
+                                blurRadius: 12,
+                                offset: const Offset(0, 3),
+                              ),
+                            ],
+                          ),
+                          child: ElevatedButton.icon(
+                            onPressed: currentIndex < totalSteps - 1
+                                ? () => setState(() => currentIndex++)
+                                : null,
+                            icon: Icon(
+                              Icons.navigate_next_rounded,
+                              size: isSmallScreen ? 18 : 20,
+                              color: Colors.white,
+                            ),
+                            label: Text(
+                              'Next',
+                              style: TextStyle(
+                                fontSize: isSmallScreen ? 12 : 14,
+                                fontWeight: FontWeight.w600,
+                                color: Colors.white,
+                              ),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: Colors.transparent,
+                              shadowColor: Colors.transparent,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
                     ],
                   ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white, size: 20),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          
-          // Content
-          Padding(
-            padding: const EdgeInsets.all(16),
-            child: Column(
-              children: [
-                // Description
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: const Color(0xFFF0F9FF),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFFBAE6FD)),
-                  ),
-                  child: Text(
-                    description,
-                    style: const TextStyle(
-                      color: Color(0xFF0369A1),
-                      fontWeight: FontWeight.w600,
-                      fontSize: 12,
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Matrix Display
-                Container(
-                  decoration: BoxDecoration(
-                    border: Border.all(color: const Color(0xFFE5E7EB)),
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.all(12),
-                  child: SingleChildScrollView(
-                    scrollDirection: Axis.horizontal,
-                    child: Column(
-                      children: snapshot.asMap().entries.map((entry) {
-                        final i = entry.key;
-                        final row = entry.value;
-                        return Padding(
-                          padding: EdgeInsets.only(bottom: i < snapshot.length - 1 ? 8 : 0),
-                          child: Row(
-                            children: row.asMap().entries.map((cell) {
-                              final isLast = cell.key == row.length - 1;
-                              return Container(
-                                width: 55,
-                                padding: const EdgeInsets.symmetric(vertical: 8),
-                                decoration: BoxDecoration(
-                                  color: isLast ? Colors.red.shade50 : Colors.white,
-                                  border: Border.all(
-                                    color: isLast 
-                                        ? Colors.red.shade200 
-                                        : const Color(0xFFE5E7EB),
-                                  ),
-                                ),
-                                child: Text(
-                                  cell.value.toStringAsFixed(widget.precision),
-                                  textAlign: TextAlign.center,
-                                  style: TextStyle(
-                                    fontSize: 11,
-                                    fontWeight: FontWeight.w600,
-                                    color: isLast 
-                                        ? Colors.red.shade700 
-                                        : const Color(0xFF1F2937),
-                                  ),
-                                ),
-                              );
-                            }).toList(),
-                          ),
-                        );
-                      }).toList(),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 16),
-                
-                // Navigation
-                Row(
-                  children: [
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: currentIndex > 0
-                            ? () => setState(() => currentIndex--)
-                            : null,
-                        icon: const Icon(Icons.navigate_before, size: 18),
-                        label: const Text('Previous', style: TextStyle(fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton.icon(
-                        onPressed: currentIndex < totalSteps - 1
-                            ? () => setState(() => currentIndex++)
-                            : null,
-                        icon: const Icon(Icons.navigate_next, size: 18),
-                        label: const Text('Next', style: TextStyle(fontSize: 13)),
-                        style: ElevatedButton.styleFrom(
-                          padding: const EdgeInsets.symmetric(vertical: 12),
-                          backgroundColor: const Color(0xFF10B981),
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
