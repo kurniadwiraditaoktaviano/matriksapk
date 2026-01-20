@@ -2697,7 +2697,7 @@ Widget _buildSettingsDrawer() {
                       ),
                       const SizedBox(width: 6),
                       Text(
-                        'Matrix Solver Pro • v1.0 • Precision: $precision',
+                        'Matrix Solver Pro • v1.0 • Prod By Kurnia & Fauzan • Precision: $precision',
                         style: TextStyle(
                           color: Colors.grey.shade600,
                           fontSize: 10,
